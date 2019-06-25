@@ -11,6 +11,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Random;
 
 import javax.crypto.BadPaddingException;
@@ -24,6 +25,7 @@ import org.apache.commons.codec.binary.Base64;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -31,6 +33,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import storage.database.Good;
+import storage.database.Group;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 
@@ -45,6 +48,7 @@ public class ClientHttp implements Runnable {
 	private final PrivateKey privateKey;
 	private Key key;
 	private final String publicKey;
+	private String token;
 	
 	private void receiveServerKey(byte[] received) {
 		
@@ -93,24 +97,24 @@ public class ClientHttp implements Runnable {
 					int type = random.nextInt(6);
 					switch(type) {
 					case 0: 
-						getGood(random.nextInt(501), token);
+						getGood(random.nextInt(501));
 						break;
 					case 1:
-						deleteGood(random.nextInt(501), token);
+						deleteGood(random.nextInt(501));
 						break;
 					case 2:
 						Good g = new Good("name"+random.nextInt(100), "description", "tester" , groups[random.nextInt(2)], random.nextDouble()*100, random.nextInt(1000));
-						createGood(g, token);
+						createGood(g);
 						break;
 					case 3:
 					//	Good goodToChange = 
 						//change(token, random.nextInt(500), random.nextDouble()*100, null, null, null, null);
 						break;
 					case 4:
-						addGood(token,  random.nextInt(500),  random.nextInt(1000));
+						addGood(random.nextInt(500),  random.nextInt(1000));
 						break;
 					case 5:
-						removeGood(token, random.nextInt(500),  random.nextInt(1000));
+						removeGood(random.nextInt(500),  random.nextInt(1000));
 						break;
 					default:
 						break;
@@ -162,7 +166,35 @@ public class ClientHttp implements Runnable {
 		System.out.println(Thread.currentThread()+" answer on login: "+responseCode + " " + response.message());
 
 		
-		String token = "";
+		if (responseCode == 200) {
+			JsonObject jo = (JsonObject) GSON.fromJson(response.body().string(), JsonElement.class);
+			if (jo.has("token")) {
+				token = jo.get("token").getAsString();
+				System.out.println(Thread.currentThread()+" token = " + token);
+			}
+			if (jo.has("key")) 
+				System.out.println(jo.get("key").getAsString());
+				receiveServerKey(DatatypeConverter.parseHexBinary(jo.get("key").getAsString()));
+			
+		}
+		return token;
+	}
+	
+	public String regirnration() throws IOException {
+
+		System.out.println("\n"+Thread.currentThread()+"try to login registration = "+login);
+		String MD5Password = ServerHttp.getMD5EncryptedValue(password);
+		Request request = new Request.Builder()
+				.addHeader("PublicKey", publicKey)
+				.url("http://localhost:8765/api/registration?login="+login+"&password="+MD5Password)
+				.build();
+
+		Response response = client.newCall(request).execute();
+		int responseCode = response.code();
+		System.out.println(Thread.currentThread()+" answer on registration: "+responseCode + " " + response.message());
+
+		
+		
 		if (responseCode == 200) {
 			JsonObject jo = (JsonObject) GSON.fromJson(response.body().string(), JsonElement.class);
 			if (jo.has("token")) {
@@ -177,7 +209,53 @@ public class ClientHttp implements Runnable {
 		return token;
 	}
 
-	public Good getGood(int id, String token) throws IOException {
+	public Group getGroup(int id) throws IOException {
+		System.out.println("\n"+Thread.currentThread()+"try to get group with id = "+id);
+		
+		Request request = new Request.Builder()
+				.get()
+				.addHeader("Authorization", token)
+				.url("http://localhost:8765/api/group/" + id)
+				.build();
+
+		Response response = client.newCall(request).execute();
+		int responseCode = response.code();
+		System.out.println(Thread.currentThread()+" answer on get group with id "+id+" : "+responseCode + " " + response.message());
+
+		if (responseCode == 200) {
+			Group g = GSON.fromJson(decryptData(response.body().string()), Group.class);
+			System.out.println(Thread.currentThread()+" good with id "+id+" : "+g.toString());
+			return g;
+		} else
+			return null;
+
+	}
+	
+	public LinkedList<Good> getAllGoods() throws IOException {
+		
+		Request request = new Request.Builder()
+				.get()
+				.addHeader("Authorization", token)
+				.url("http://localhost:8765/api/goods/all")
+				.build();
+
+		Response response = client.newCall(request).execute();
+		int responseCode = response.code();
+		System.out.println(Thread.currentThread()+" answer on getAllGoods : "+responseCode + " " + response.message());
+
+		if (responseCode == 200) {
+			JsonArray g = GSON.fromJson(decryptData(response.body().string()), JsonArray.class);
+			LinkedList<Good> res = new LinkedList<Good>();
+			for(int i=0; i<g.size(); i++) {
+				res.add(GSON.fromJson(g.get(i).getAsString(), Good.class));
+			}
+			return res;
+		} else
+			return null;
+
+	}
+	
+	public Good getGood(int id) throws IOException {
 		System.out.println("\n"+Thread.currentThread()+"try to get good with id = "+id);
 		
 		Request request = new Request.Builder()
@@ -198,8 +276,27 @@ public class ClientHttp implements Runnable {
 			return null;
 
 	}
+	
+	public boolean deleteGroup(int id) throws IOException {
+		System.out.println("\n"+Thread.currentThread()+"try to delete group with id = "+id);
+		
+		Request request = new Request.Builder()
+				// .addHeader("Connection","close")
+				.addHeader("Authorization", token).delete().url("http://localhost:8765/api/group/" + id).build();
 
-	public boolean deleteGood(int id, String token) throws IOException {
+		Response response = client.newCall(request).execute();
+		int responseCode = response.code();
+		System.out.println(Thread.currentThread()+" answer on deleting group with id "+id+" : "+responseCode + " " + response.message());
+
+		if (responseCode == 204) {
+			System.out.println("deleted");
+			return true;
+		} else
+			return false;
+
+	}
+
+	public boolean deleteGood(int id) throws IOException {
 		System.out.println("\n"+Thread.currentThread()+"try to delete good with id = "+id);
 		
 		Request request = new Request.Builder()
@@ -211,16 +308,41 @@ public class ClientHttp implements Runnable {
 		System.out.println(Thread.currentThread()+" answer on deleting good with id "+id+" : "+responseCode + " " + response.message());
 
 		if (responseCode == 204) {
-			Good good = GSON.fromJson(response.body().string(), Good.class);
 			System.out.println("deleted");
 			return true;
 		} else
 			return false;
 
 	}
+	
+	public int createGroup(Group g) throws IOException {
+		System.out.println("\n"+Thread.currentThread()+"try to create group");
+		
+		Request request = new Request.Builder()
+				.addHeader("Authorization", token)
+				.url("http://localhost:8765/api/group")
+				.put(RequestBody.create(JSON, encryptData(GSON.toJson(g))))
+				.build();
 
-	public int createGood(Good g, String token) throws IOException {
-		System.out.println("\n"+Thread.currentThread()+"try to create good with id ");
+		Response response = client.newCall(request).execute();
+		int responseCode = response.code();
+		System.out.println(Thread.currentThread()+" answer on creating good : "+responseCode + " " + response.message());
+
+		if (responseCode == 201) {
+			JsonObject jo = (JsonObject) GSON.fromJson(decryptData(response.body().string()), JsonElement.class);
+			int id = -1;
+			if (jo.has("id"))
+				id = jo.get("id").getAsInt();
+			System.out.println(Thread.currentThread()+" created id = " + id);
+
+			return id;
+		} else
+			return -1;
+
+	}
+
+	public int createGood(Good g) throws IOException {
+		System.out.println("\n"+Thread.currentThread()+"try to create good ");
 		
 		Request request = new Request.Builder()
 				.addHeader("Authorization", token)
@@ -244,9 +366,34 @@ public class ClientHttp implements Runnable {
 			return -1;
 
 	}
+	
+	
+	public boolean changeGroup(Group group) throws IOException {
+		System.out.println("\n"+Thread.currentThread()+"try to change group with id = "+group.getId());
+		
+		JsonObject jo = new JsonObject();
+		String jsonGood = GSON.toJson(group);
+		jo.addProperty("group", jsonGood);
+
+		RequestBody body = RequestBody.create(JSON, encryptData(GSON.toJson((JsonElement) jo)));
+		Request request = new Request.Builder()
+				.addHeader("Authorization", token)
+				.url("http://localhost:8765/api/group")
+				.post(body)
+				.build();
+
+		Response response = client.newCall(request).execute();
+		int responseCode = response.code();
+		System.out.println(Thread.currentThread()+" answer on changing group with id "+group.getId()+" : "+responseCode + " " + response.message());
+
+		if (responseCode == 204) 
+			return true;
+		else
+			return false;
+	}
 
 	
-	public boolean change(Good good, String token) throws IOException {
+	public boolean change(Good good) throws IOException {
 		System.out.println("\n"+Thread.currentThread()+"try to change good with id = "+good.getId());
 		
 		JsonObject jo = new JsonObject();
@@ -254,10 +401,10 @@ public class ClientHttp implements Runnable {
 		jo.addProperty("good", jsonGood);
 
 		RequestBody body = RequestBody.create(JSON, encryptData(GSON.toJson((JsonElement) jo)));
-		return sendPostRequest(body, good.getId(), token);
+		return sendPostRequest(body, good.getId());
 	}
 	
-	public boolean addGood(String token, int id, int quantity) throws IOException {
+	public boolean addGood( int id, int quantity) throws IOException {
 		System.out.println("\n"+Thread.currentThread()+"try to add "+quantity+" goods with id = "+id);
 		
 		JsonObject jo = new JsonObject();
@@ -265,10 +412,10 @@ public class ClientHttp implements Runnable {
 		jo.addProperty("addGood", quantity);
 
 		RequestBody body = RequestBody.create(JSON, encryptData(GSON.toJson((JsonElement) jo)));
-		return sendPostRequest(body, id, token);
+		return sendPostRequest(body, id);
 	}
 	
-	public boolean removeGood(String token, int id, int quantity) throws IOException {
+	public boolean removeGood( int id, int quantity) throws IOException {
 		System.out.println("\n"+Thread.currentThread()+"try to remove "+quantity+" goods with id = "+id);
 		
 		JsonObject jo = new JsonObject();
@@ -276,10 +423,10 @@ public class ClientHttp implements Runnable {
 		jo.addProperty("removeGood", quantity);
 
 		RequestBody body = RequestBody.create(JSON, encryptData(GSON.toJson((JsonElement) jo)));
-		return sendPostRequest(body, id, token);
+		return sendPostRequest(body, id);
 	}
 	
-	private boolean sendPostRequest(RequestBody body, int id, String token) throws IOException {
+	private boolean sendPostRequest(RequestBody body, int id) throws IOException {
 		Request request = new Request.Builder()
 				.addHeader("Authorization", token)
 				.url("http://localhost:8765/api/good")
@@ -300,7 +447,7 @@ public class ClientHttp implements Runnable {
 
 	static public void main(String args[]) throws Exception {
 		 HashMap<String, String> users = new HashMap<String, String>();
-        users.put("login", "password");
+        users.put("login1", "password1");
         users.put("Kate","12345");
         
 //		for(int i=0; i<10; i++) {
@@ -316,20 +463,33 @@ public class ClientHttp implements Runnable {
 //			cli.start();
 //		}
         
-        ClientHttp cli  = new ClientHttp("login", "password");
-        String token = cli.login();
-        System.out.println(token);
-        Good goodToChange = new Good(1, "milkk", "milk product", "Kyiv", 25.9);
-        cli.change(goodToChange, token);
+        ClientHttp cli  = new ClientHttp("login1", "password1");
+        //String token = cli.login();
+        cli.login();
+//        System.out.println(token);
+//        Good goodToChange = new Good(1, "milkk", "milk product", "Kyiv", 25.9);
+//        cli.change(goodToChange, token);
+//        
+//        cli.getGood(1, token);
+//        
+//        Good goodToCreate = new Good("name", "description", "producer", "dairy", 30, 100);
+//        cli.createGood(goodToCreate, token);
+//        
+//        cli.deleteGood(1, token);
+//        
+//        cli.getGood(1, token);
         
-        cli.getGood(1, token);
+//        int id = cli.createGroup(new Group("name", "description"));
+//      //  id=113;
+//        cli.getGroup(id);
+//        cli.changeGroup(new Group(id, "name1", "desc1"));
+//        cli.getGroup(id);
+//        cli.deleteGroup(id);
         
-        Good goodToCreate = new Good("name", "description", "producer", "dairy", 30, 100);
-        cli.createGood(goodToCreate, token);
-        
-        cli.deleteGood(1, token);
-        
-        cli.getGood(1, token);
+        LinkedList<Good> l = cli.getAllGoods();
+        for(Good g: l) {
+        	System.out.println(g);
+        }
         
 	}
 	

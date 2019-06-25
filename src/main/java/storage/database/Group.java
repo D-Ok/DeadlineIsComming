@@ -4,8 +4,23 @@ public class Group {
 
 	private String name;
 	private String description;
+	private int id;
 	
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
 	public Group(String name, String description) {
+		this.name = name;
+		this.description = description;
+	}
+	
+	public Group(int id, String name, String description) {
+		this.id=id;
 		this.name = name;
 		this.description = description;
 	}

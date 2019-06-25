@@ -572,31 +572,36 @@ public class ServerHttp {
 				
 				String uri = exchange.getRequestURI().getRawPath();
 				String[] uriParths = uri.split("/");
-
-				if (uriParths[uriParths.length - 2] == "goods" && uriParths[uriParths.length - 1] == "all") {
-					
-					// get all goods
-					String p = exchange.getRequestURI().getRawQuery();
-					Map<String, String> params = new HashMap<String, String>();
-
-					for (String str : p.split("&")) {
-						String[] pair = str.split("=");
-						params.put(pair[0], pair[1]);
-					}
-					String group = "";
-					
-					//get all goods from group
-					if (params.containsKey("group")) {
-						group = params.get("group");
-						LinkedList<Good> goods = db.getAllGoodsOfTheGroup(group);
-						sendListOfGoods(exchange, goods, token);
-					} else {
-						sendListOfGoods(exchange, db.getAllGoods(), token);
-					}
 				
+				String p = exchange.getRequestURI().getRawQuery();
+
+				if (uriParths[uriParths.length - 2].equals("goods") && uriParths[uriParths.length - 1].equals("all")) {
+
+					// get all goods
+
+					Map<String, String> params = new HashMap<String, String>();
+
+					if (p == null) {
+						sendListOfGoods(exchange, db.getAllGoods(), token);
+					} else {
+						for (String str : p.split("&")) {
+							String[] pair = str.split("=");
+							params.put(pair[0], pair[1]);
+						}
+						String group = "";
+
+						// get all goods from group
+						if (params.containsKey("group")) {
+							group = params.get("group");
+							LinkedList<Good> goods = db.getAllGoodsOfTheGroup(group);
+							sendListOfGoods(exchange, goods, token);
+						} else {
+							exchange.sendResponseHeaders(404, -1);
+						}
+					}
+
 				} else {
-					//get goods by criteria
-					String p = exchange.getRequestURI().getRawQuery();
+					// get goods by criteria
 					Map<String, String> params = new HashMap<String, String>();
 
 					for (String str : p.split("&")) {
@@ -604,12 +609,12 @@ public class ServerHttp {
 						params.put(pair[0], pair[1]);
 					}
 
-					String column = "", value ="";
-					
-					//get all goods from group
-					if (params.containsKey("column")) 
+					String column = "", value = "";
+
+					// get all goods from group
+					if (params.containsKey("column"))
 						column = params.get("column");
-					if (params.containsKey("column")) 
+					if (params.containsKey("column"))
 						value = params.get("value");
 					LinkedList<Good> goods = db.listByGoodColumnContains(column, value);
 					sendListOfGoods(exchange, goods, token);
@@ -622,13 +627,13 @@ public class ServerHttp {
 		}
 
 		private void sendListOfGoods(HttpExchange exchange, LinkedList<Good> goods, String token) throws IOException {
-			
+
 			if(goods!=null && goods.size()>0) {
 				JsonArray ja = new JsonArray();
 				for (Good g : goods) {
 					ja.add(GSON.toJson(g));
 				}
-				String b = ja.getAsString();
+				String b = GSON.toJson((JsonElement) ja);
 				byte[] body = encryptData(token, b);
 
 				exchange.sendResponseHeaders(200, body.length);
@@ -636,7 +641,7 @@ public class ServerHttp {
 				OutputStream os = exchange.getResponseBody();
 				os.write(body);
 				os.close();
-			} else exchange.sendResponseHeaders(405, -1);
+			} else exchange.sendResponseHeaders(404, -1);
 			
 		}
 	}
@@ -645,55 +650,62 @@ public class ServerHttp {
 		@Override
 		public void handle(HttpExchange exchange) throws IOException {
 
+
 			if ("GET".equals(exchange.getRequestMethod())) {
 
+				Headers head = exchange.getRequestHeaders();
+				String token = head.getFirst("Authorization");
+				
+				String uri = exchange.getRequestURI().getRawPath();
+				String[] uriParths = uri.split("/");
+				
 				String p = exchange.getRequestURI().getRawQuery();
-				System.out.println(p);
-				Map<String, String> params = new HashMap<String, String>();
 
-				for (String str : p.split("&")) {
-					String[] pair = str.split("=");
-					params.put(pair[0], pair[1]);
+				if (p==null) sendListOfGroups(exchange, db.getAllGroups(), token);
+				else {
+
+					Map<String, String> params = new HashMap<String, String>();
+
+					for (String str : p.split("&")) {
+						String[] pair = str.split("=");
+						params.put(pair[0], pair[1]);
+					}
+
+					String column = "", value = "";
+
+					// get all goods from group
+					if (params.containsKey("column"))
+						column = params.get("column");
+					if (params.containsKey("column"))
+						value = params.get("value");
+					sendListOfGroups(exchange, db.listByGroupColumnContains(column, value), token);
 				}
-
-				String login = "", password = "";
-				if (params.containsKey("login"))
-					login = params.get("login");
-				if (params.containsKey("password"))
-					password = params.get("password");
-				
-				Headers h = exchange.getRequestHeaders();
-				byte[] publicKey = Base64.decodeBase64(h.getFirst("PublicKey"));
-				
-				System.out.println("GET: login = " + login + " password = " + password);
-				if (db.existUser(login, password)) {
-					String token = createJWT(" " + unicNumber, login);
-					unicNumber++;
-					byte[] key =  ServerHttp.generateKey(publicKey, token);
-					
-					JsonObject jo = new JsonObject();
-					jo.addProperty("token", token);
-					jo.addProperty("key", DatatypeConverter.printHexBinary(key));
-					
-					String b = GSON.toJson((JsonElement) jo);
-					byte[] body = b.getBytes("UTF-8");
-
-					exchange.sendResponseHeaders(200, body.length);
-
-					OutputStream os = exchange.getResponseBody();
-					os.write(body);
-					os.close();
-
-				} else {
-					exchange.sendResponseHeaders(401, -1);
-				}
-
-			} else {
+			} else 
+			{
 				exchange.sendResponseHeaders(405, -1);// 405 Method Not Allowed
 			}
 			exchange.close();
 
 		}
+	
+	private void sendListOfGroups(HttpExchange exchange, LinkedList<Group> groups, String token) throws IOException {
+		if (groups != null && groups.size() > 0) {
+			JsonArray ja = new JsonArray();
+			for (Group g : groups) {
+				ja.add(GSON.toJson(g));
+			}
+			String b = GSON.toJson((JsonElement) ja);
+			byte[] body = encryptData(token, b);
+
+			exchange.sendResponseHeaders(200, body.length);
+
+			OutputStream os = exchange.getResponseBody();
+			os.write(body);
+			os.close();
+		} else
+			exchange.sendResponseHeaders(404, -1);
+	
+	}
 	}
 
 	

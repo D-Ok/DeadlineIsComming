@@ -28,6 +28,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -231,6 +232,38 @@ public class ClientHttp implements Runnable {
 
 	}
 	
+	public LinkedList<Group> getAllGroups() throws IOException {
+		
+		Request request = new Request.Builder()
+				.get()
+				.addHeader("Authorization", token)
+				.url("http://localhost:8765/api/groups/all")
+				.build();
+
+		return groups(request);
+
+	}
+	
+	public LinkedList<Group> getSearchGroupByName(String value) throws IOException {
+		Request request = new Request.Builder()
+				.get()
+				.addHeader("Authorization", token)
+				.url("http://localhost:8765/api/goods?column=name&value="+value)
+				.build();
+
+		return groups(request);
+	}
+	
+	public LinkedList<Group> getSearchGroupsByDescription(String value) throws IOException {
+		Request request = new Request.Builder()
+				.get()
+				.addHeader("Authorization", token)
+				.url("http://localhost:8765/api/goods?column=description&value="+value)
+				.build();
+
+		return groups(request);
+	}
+	
 	public LinkedList<Good> getAllGoods() throws IOException {
 		
 		Request request = new Request.Builder()
@@ -239,10 +272,56 @@ public class ClientHttp implements Runnable {
 				.url("http://localhost:8765/api/goods/all")
 				.build();
 
-		Response response = client.newCall(request).execute();
-		int responseCode = response.code();
-		System.out.println(Thread.currentThread()+" answer on getAllGoods : "+responseCode + " " + response.message());
+		return goods(request);
 
+	}
+	
+	public LinkedList<Good> getGoodsOfGroup(String group) throws IOException {
+		
+		Request request = new Request.Builder()
+				.get()
+				.addHeader("Authorization", token)
+				.url("http://localhost:8765/api/goods/all?group="+group)
+				.build();
+
+		return goods(request);
+
+	}
+	
+	public LinkedList<Good> getSearchGoodsByName(String value) throws IOException {
+		return getSearchGoods("name", value);
+	}
+	
+	public LinkedList<Good> getSearchGoodsByDescription(String value) throws IOException {
+		return getSearchGoods("description", value);
+	}
+	
+	public LinkedList<Good> getSearchGoodsByProducer(String value) throws IOException {
+		return getSearchGoods("producer", value);
+	}
+	
+	public LinkedList<Good> getSearchGoodsByGroup(String value) throws IOException {
+		return getSearchGoods("groupName", value);
+	}
+	
+	public LinkedList<Good> getSearchGoods(String column, String value) throws IOException {
+
+		Request request = new Request.Builder()
+				.get()
+				.addHeader("Authorization", token)
+				.url("http://localhost:8765/api/goods?column="+column+"&value="+value)
+				.build();
+
+		return goods(request);
+
+	}
+	
+	private LinkedList<Good> goods(Request request) throws JsonSyntaxException, IOException {
+		
+		Response response = client.newCall(request).execute();
+		
+		int responseCode = response.code();
+		System.out.println(Thread.currentThread()+" answer on getGoods : "+responseCode + " " + response.message());
 		if (responseCode == 200) {
 			JsonArray g = GSON.fromJson(decryptData(response.body().string()), JsonArray.class);
 			LinkedList<Good> res = new LinkedList<Good>();
@@ -252,9 +331,26 @@ public class ClientHttp implements Runnable {
 			return res;
 		} else
 			return null;
-
 	}
 	
+	private LinkedList<Group> groups(Request request) throws JsonSyntaxException, IOException {
+		
+		Response response = client.newCall(request).execute();
+		
+		int responseCode = response.code();
+		System.out.println(Thread.currentThread()+" answer on getGroups : "+responseCode + " " + response.message());
+		if (responseCode == 200) {
+			JsonArray g = GSON.fromJson(decryptData(response.body().string()), JsonArray.class);
+			LinkedList<Group> res = new LinkedList<Group>();
+			for(int i=0; i<g.size(); i++) {
+				res.add(GSON.fromJson(g.get(i).getAsString(), Group.class));
+			}
+			return res;
+		} else
+			return null;
+	}
+
+
 	public Good getGood(int id) throws IOException {
 		System.out.println("\n"+Thread.currentThread()+"try to get good with id = "+id);
 		
@@ -463,7 +559,7 @@ public class ClientHttp implements Runnable {
 //			cli.start();
 //		}
         
-        ClientHttp cli  = new ClientHttp("login1", "password1");
+        ClientHttp cli  = new ClientHttp("login2", "password2");
         //String token = cli.login();
         cli.login();
 //        System.out.println(token);
@@ -486,8 +582,13 @@ public class ClientHttp implements Runnable {
 //        cli.getGroup(id);
 //        cli.deleteGroup(id);
         
-        LinkedList<Good> l = cli.getAllGoods();
-        for(Good g: l) {
+//        LinkedList<Good> l = cli.getSearchGoodsByProducer("Kyiv");
+//        for(Good g: l) {
+//        	System.out.println(g);
+//        }
+        
+        LinkedList<Group> l = cli.getAllGroups();
+        for(Group g: l) {
         	System.out.println(g);
         }
         

@@ -27,8 +27,8 @@ public class EditGroupPanel extends JPanel {
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] { 0 };
 		gridBagLayout.rowHeights = new int[] { 0 };
-		gridBagLayout.columnWeights = new double[] { Double.MIN_VALUE };
-		gridBagLayout.rowWeights = new double[] { Double.MIN_VALUE };
+		gridBagLayout.columnWeights = new double[] { 0.5, 1.0 };
+		gridBagLayout.rowWeights = new double[] { 0.5, 0.5, 1.0 };
 		setLayout(gridBagLayout);
 
 		JLabel label = new JLabel("Ім'я:");

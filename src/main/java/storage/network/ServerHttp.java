@@ -1,6 +1,6 @@
 package storage.network;
 
-import com.google.gson.Gson; 
+import com.google.gson.Gson;  
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -13,10 +13,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.crypto.MacProvider;
 
-import storage.database.Database;
-import storage.database.Good;
-import storage.database.Group;
-import storage.exceptions.InvalidCharacteristicOfGoodsException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,25 +45,31 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.binary.Base64;
 
+import storage.database.*;
+import storage.exceptions.InvalidCharacteristicOfGoodsException;
+
 public class ServerHttp {
 
 	private static final SecretKey key = MacProvider.generateKey(SignatureAlgorithm.HS256);
 	private static final Database db = new Database();
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private volatile static int unicNumber = 0;
-	private static Cipher cipher ;
-//	private static CopyOnWriteArraySet<String> tokens = new CopyOnWriteArraySet<String>();
+
+	private static Cipher cipher;
+//  private static CopyOnWriteArraySet<String> tokens = new CopyOnWriteArraySet<String>();
 	private static ConcurrentHashMap<String, Key> tokenAndKey = new ConcurrentHashMap<String, Key>();
-	
+
 	public ServerHttp() throws IOException {
-		
+
+
 		HttpServer server = HttpServer.create();
 		server.bind(new InetSocketAddress(8765), 0);
 
 		HttpContext context = server.createContext("/api/login", new LoginHandler());
+
 		
 		HttpContext registration = server.createContext("/api/registration", new RegistrationHandler());
-		
+
 		HttpContext context1 = server.createContext("/api/group", new GroupHandler());
 		context1.setAuthenticator(new Auth());
 
@@ -84,13 +86,13 @@ public class ServerHttp {
 		server.start();
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception, InvalidCharacteristicOfGoodsException{
 
 		db.createGroup("dairy", "products with milk");
 		db.createGroup("groats", "description");
 		db.createUser("login", getMD5EncryptedValue("password"));
 		db.createUser("Kate", getMD5EncryptedValue("12345"));
-		
+
 		db.createGoods("milk", "dairy", "milk product", "Kyiv", 600, 23.9);
 		db.createGoods("cheese", "dairy", "milk product", "Poltava", 780, 44);
 		db.createGoods("butter", "dairy", "milk product", "Chernihiv", 450, 43.5);
@@ -98,15 +100,14 @@ public class ServerHttp {
 		db.createGoods("buckwheat", "groats", "description", "Kyiv", 1000, 25.5);
 		db.createGoods("fig", "groats", "description", "Chernihiv", 1500, 33);
 		db.createGoods("bulgur", "groats", "description", "Kyiv", 800, 40);
-		
+
 		ServerHttp sh = new ServerHttp();
 
 	}
 
 	// Sample method to construct a JWT
 	private static String createJWT(String id, String subject) {
-
-		// The JWT signature algorithm we will be using to sign the token
+// The JWT signature algorithm we will be using to sign the token
 		SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 		long nowMillis = System.currentTimeMillis();
 		Date now = new Date(nowMillis);
@@ -134,6 +135,7 @@ public class ServerHttp {
 	private static boolean isAlive(String jwt) {
 
 		// This line will throw an exception if it is not a signed JWS (as expected)
+
 		if(tokenAndKey.containsKey(jwt)) {
 			try {
 				Claims claims = Jwts.parser().setSigningKey(key).parseClaimsJws(jwt).getBody();
@@ -176,6 +178,7 @@ public class ServerHttp {
 					login = params.get("login");
 				if (params.containsKey("password"))
 					password = params.get("password");
+
 				
 				Headers h = exchange.getRequestHeaders();
 				byte[] publicKey = Base64.decodeBase64(h.getFirst("PublicKey"));
@@ -184,6 +187,7 @@ public class ServerHttp {
 				if (db.existUser(login, password)) {
 					String token = createJWT(" " + unicNumber, login);
 					unicNumber++;
+
 					byte[] key =  ServerHttp.generateKey(publicKey, token);
 					
 					JsonObject jo = new JsonObject();
@@ -231,6 +235,7 @@ public class ServerHttp {
 					login = params.get("login");
 				if (params.containsKey("password"))
 					password = params.get("password");
+
 				
 				Headers h = exchange.getRequestHeaders();
 				byte[] publicKey = Base64.decodeBase64(h.getFirst("PublicKey"));
@@ -239,6 +244,7 @@ public class ServerHttp {
 				if (db.createUser(login, password)) {
 					String token = createJWT(" " + unicNumber, login);
 					unicNumber++;
+
 					byte[] key =  ServerHttp.generateKey(publicKey, token);
 					
 					JsonObject jo = new JsonObject();
@@ -265,7 +271,7 @@ public class ServerHttp {
 
 		}
 	}
-	
+
 	static class GoodHandler implements HttpHandler {
 		@Override
 		public void handle(HttpExchange exchange) throws IOException {
@@ -299,11 +305,10 @@ public class ServerHttp {
 			int idOfGood = Integer.valueOf(id);
 			Good good = db.getGoodById(idOfGood);
 			if (good != null) {
-				System.out.println("send information to client about: "+good);
+				System.out.println("send information to client about: " + good);
 				String b = GSON.toJson(good);
 				byte[] body = encryptData(token, b);
 				System.out.println(new String(body));
-				System.out.println("here");
 				
 				exchange.sendResponseHeaders(200, body.length);
 				
@@ -322,12 +327,12 @@ public class ServerHttp {
 			String id = uriParths[uriParths.length - 1];
 
 			int idOfGood = Integer.valueOf(id);
-			
+
 			Good g = db.getGoodById(idOfGood);
-			
-			if(g==null) exchange.sendResponseHeaders(404, -1);
-			else 
-			{
+
+			if (g == null)
+				exchange.sendResponseHeaders(404, -1);
+			else {
 				if (db.deleteGoodById(idOfGood)) {
 					System.out.println("deleted");
 					exchange.sendResponseHeaders(204, -1);
@@ -344,13 +349,15 @@ public class ServerHttp {
 			String token = head.getFirst("Authorization");
 
 			try {
-				
+
+
 				Good goodToCreate = GSON.fromJson(decryptData(token, is.readAllBytes()), Good.class);
 				if (db.createGoods(goodToCreate)) {
-					System.out.println("Created good: "+goodToCreate);
+					System.out.println("Created good: " + goodToCreate);
 					int id = db.getGoodId(goodToCreate.getName());
 					JsonObject jo = new JsonObject();
 					jo.addProperty("id", id);
+
 					String b = GSON.toJson((JsonElement) jo);
 					byte[] body = encryptData(token, b);
 
@@ -372,53 +379,55 @@ public class ServerHttp {
 			InputStream is = exchange.getRequestBody();
 			Headers head = exchange.getRequestHeaders();
 			String token = head.getFirst("Authorization");
+
 			
 			try {
 				JsonObject jo = GSON.fromJson(decryptData(token, is.readAllBytes()), JsonObject.class);
 				
 				if(jo.has("good")) {
-					
 					Good goodToChange = GSON.fromJson(jo.get("good").getAsString(), Good.class);
 					Good g = db.getGoodById(goodToChange.getId());
-					
-					if(g==null) exchange.sendResponseHeaders(404, -1);
+
+					if (g == null)
+						exchange.sendResponseHeaders(404, -1);
 					else {
 						boolean isChanged = false;
-						System.out.println("Good before changes: "+g);
-						
+						System.out.println("Good before changes: " + g);
+
 						try {
-							isChanged = db.updateGood(g.getId(), goodToChange.getName(), goodToChange.getDescription(), 
+							isChanged = db.updateGood(g.getId(), goodToChange.getName(), goodToChange.getDescription(),
 									goodToChange.getDescription(), goodToChange.getPrice());
 						} catch (InvalidCharacteristicOfGoodsException e) {
 							exchange.sendResponseHeaders(409, -1);
 						}
-						
-						if(isChanged) {
-							System.out.println("Chenged good: "+db.getGoodById(g.getId()));	
+
+						if (isChanged) {
+							System.out.println("Chenged good: " + db.getGoodById(g.getId()));
 							exchange.sendResponseHeaders(204, -1);
-						} else exchange.sendResponseHeaders(409, -1);
+						} else
+							exchange.sendResponseHeaders(409, -1);
 					}
-				}
-				else if(jo.has("id")) {
+				} else if (jo.has("id")) {
 					int id = jo.get("id").getAsInt();
 					Good g = db.getGoodById(id);
-					
-					if(g==null) 
+
+					if (g == null)
 						exchange.sendResponseHeaders(404, -1);
 					else {
-						System.out.println("Good before changes: "+g);
-						
-						if(jo.has("addGood"))  db.addGoodsById(id, jo.get("addGood").getAsInt());
-						if(jo.has("removeGood"))
+						System.out.println("Good before changes: " + g);
+
+						if (jo.has("addGood"))
+							db.addGoodsById(id, jo.get("addGood").getAsInt());
+						if (jo.has("removeGood"))
 							try {
 								db.removeGoodsById(id, jo.get("removeGood").getAsInt());
 							} catch (InvalidCharacteristicOfGoodsException e) {
 								exchange.sendResponseHeaders(409, -1);
 							}
-						System.out.println("Chenged good: "+db.getGoodById(id));	
+						System.out.println("Chenged good: " + db.getGoodById(id));
 						exchange.sendResponseHeaders(204, -1);
 					}
-				} else 
+				} else
 					exchange.sendResponseHeaders(404, -1);
 			} catch (JsonSyntaxException e) {
 				e.printStackTrace();
@@ -450,6 +459,7 @@ public class ServerHttp {
 		}
 
 
+
 		private void groupInfo(HttpExchange exchange) throws IOException {
 
 			String uri = exchange.getRequestURI().getRawPath();
@@ -461,6 +471,7 @@ public class ServerHttp {
 			int idOfGroup = Integer.valueOf(id);
 			Group group = db.getGroupById(idOfGroup);
 			if (group != null) {
+
 				System.out.println("send information to client about: "+group);
 				String b = GSON.toJson(group);
 				byte[] body = encryptData(token, b);
@@ -484,6 +495,7 @@ public class ServerHttp {
 
 			int idOfGroup = Integer.valueOf(id);
 			Group group = db.getGroupById(idOfGroup);
+
 			if(group==null) exchange.sendResponseHeaders(404, -1);
 			else 
 			{
@@ -503,6 +515,7 @@ public class ServerHttp {
 			String token = head.getFirst("Authorization");
 
 			try {
+
 				
 				Group groupToCreate = GSON.fromJson(decryptData(token, is.readAllBytes()), Group.class);
 				if (db.createGroup(groupToCreate)) {
@@ -531,7 +544,7 @@ public class ServerHttp {
 			InputStream is = exchange.getRequestBody();
 			Headers head = exchange.getRequestHeaders();
 			String token = head.getFirst("Authorization");
-			
+	
 			try {
 				JsonObject jo = GSON.fromJson(decryptData(token, is.readAllBytes()), JsonObject.class);
 				
@@ -646,6 +659,8 @@ public class ServerHttp {
 		}
 	}
 
+
+
 	static class GroupListHandler implements HttpHandler {
 		@Override
 		public void handle(HttpExchange exchange) throws IOException {
@@ -655,13 +670,14 @@ public class ServerHttp {
 
 				Headers head = exchange.getRequestHeaders();
 				String token = head.getFirst("Authorization");
-				
+
 				String uri = exchange.getRequestURI().getRawPath();
 				String[] uriParths = uri.split("/");
-				
+
 				String p = exchange.getRequestURI().getRawQuery();
 
-				if (p==null) sendListOfGroups(exchange, db.getAllGroups(), token);
+				if (p == null)
+					sendListOfGroups(exchange, db.getAllGroups(), token);
 				else {
 
 					Map<String, String> params = new HashMap<String, String>();
@@ -679,9 +695,9 @@ public class ServerHttp {
 					if (params.containsKey("column"))
 						value = params.get("value");
 					sendListOfGroups(exchange, db.listByGroupColumnContains(column, value), token);
+
 				}
-			} else 
-			{
+			} else {
 				exchange.sendResponseHeaders(405, -1);// 405 Method Not Allowed
 			}
 			exchange.close();
@@ -708,13 +724,13 @@ public class ServerHttp {
 	}
 	}
 
-	
+
 	static class Auth extends Authenticator {
 		@Override
 		public Result authenticate(HttpExchange httpExchange) {
 			Headers head = httpExchange.getRequestHeaders();
 			String token = head.getFirst("Authorization");
-			if (token==null || token.length() <= 1) 
+			if (token == null || token.length() <= 1)
 				return new Failure(403);
 			if (isAlive(token))
 				return new Success(new HttpPrincipal("c0nst", "realm"));
@@ -722,29 +738,30 @@ public class ServerHttp {
 				return new Failure(403);
 		}
 	}
-	
+
 	public static String getMD5EncryptedValue(String password) {
-        final byte[] defaultBytes = password.getBytes();
-        try {
-            final MessageDigest md5MsgDigest = MessageDigest.getInstance("MD5");
-            md5MsgDigest.reset();
-            md5MsgDigest.update(defaultBytes);
-            final byte messageDigest[] = md5MsgDigest.digest();
-            final StringBuffer hexString = new StringBuffer();
-            for (final byte element : messageDigest) {
-                final String hex = Integer.toHexString(0xFF & element);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            password = hexString + "";
-        } catch (final NoSuchAlgorithmException nsae) {
-            nsae.printStackTrace();
-        }
-        return password;
-    }
-	
+		final byte[] defaultBytes = password.getBytes();
+		try {
+			final MessageDigest md5MsgDigest = MessageDigest.getInstance("MD5");
+			md5MsgDigest.reset();
+			md5MsgDigest.update(defaultBytes);
+			final byte messageDigest[] = md5MsgDigest.digest();
+			final StringBuffer hexString = new StringBuffer();
+			for (final byte element : messageDigest) {
+				final String hex = Integer.toHexString(0xFF & element);
+				if (hex.length() == 1) {
+					hexString.append('0');
+				}
+				hexString.append(hex);
+			}
+			password = hexString + "";
+		} catch (final NoSuchAlgorithmException nsae) {
+			nsae.printStackTrace();
+		}
+		return password;
+	}
+
+
 	public static byte[] encryptData(String token, String data) {
 		try {
 			cipher = Cipher.getInstance("AES");
@@ -752,12 +769,15 @@ public class ServerHttp {
 			cipher.init(Cipher.ENCRYPT_MODE, tokenAndKey.get(token));
 
 			return Base64.encodeBase64(cipher.doFinal(d));
-		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException | UnsupportedEncodingException e) {
+
+		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException
+				| NoSuchPaddingException | UnsupportedEncodingException e) {
+
 			e.printStackTrace();
 			return null;
 		}
 	}
-	
+
 	public static String decryptData(String token, byte[] data) {
 		try {
 			cipher = Cipher.getInstance("AES");
@@ -765,12 +785,14 @@ public class ServerHttp {
 			byte[] decrypted = cipher.doFinal(data);
 			String res = new String(decrypted);
 			return res;
-		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException
+				| NoSuchPaddingException e) {
+
 			e.printStackTrace();
 			return null;
 		}
 	}
-	
+
 	public static byte[] generateKey(byte[] pubKey, String token) {
 		KeyFactory kf;
 		byte[] encryptedKeyBytes = null;
@@ -786,7 +808,7 @@ public class ServerHttp {
 			tokenAndKey.put(token, key);
 			byte[] keyBytes = key.getEncoded();
 			encryptedKeyBytes = cipher.doFinal(keyBytes);
-			
+
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException | NoSuchPaddingException
 				| IllegalBlockSizeException | BadPaddingException e) {
 			e.printStackTrace();
@@ -794,5 +816,4 @@ public class ServerHttp {
 
 		return encryptedKeyBytes;
 	}
-
 }

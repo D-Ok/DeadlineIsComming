@@ -1,1 +1,6 @@
 D:\java\FinalProject\storage\src\main\java\storage\App.java
+D:\java\FinalProject\storage\src\main\java\storage\database\Database.java
+D:\java\FinalProject\storage\src\main\java\storage\database\Good.java
+D:\java\FinalProject\storage\src\main\java\storage\exceptions\InvalidCharacteristicOfGoodsException.java
+D:\java\FinalProject\storage\src\main\java\storage\network\ServerHttp.java
+D:\java\FinalProject\storage\src\main\java\storage\database\Group.java

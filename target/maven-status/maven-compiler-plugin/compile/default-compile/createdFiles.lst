@@ -1,1 +1,6 @@
+storage\database\Good.class
+storage\exceptions\InvalidCharacteristicOfGoodsException.class
 storage\App.class
+storage\network\ServerHttp.class
+storage\database\Database.class
+storage\database\Group.class

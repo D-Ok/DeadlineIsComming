@@ -18,7 +18,7 @@ public class Database {
 	public Database() {
 		String user = "root";
     	String password = "root35";
-    	String connectionURL = "jdbc:mysql://localhost:3306/messaging?serverTimezone=Europe/Kiev&useSSL=false";
+    	String connectionURL = "jdbc:mysql://localhost:3306/storage?serverTimezone=Europe/Kiev&useSSL=false";
     	try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 	    	connection = DriverManager.getConnection(connectionURL, user, password);
@@ -58,7 +58,7 @@ public class Database {
 		String usersTable = "create table if not exists `users`"
 				+ " (`id` INT NOT NULL AUTO_INCREMENT, "
 				+ "`login` VARCHAR(45) NOT NULL, "
-				+ "`password` VARCHAR(1000) NOT NULL, "
+				+ "`password` VARCHAR(100) NOT NULL, "
 				+ "PRIMARY KEY (`id`, `password`), "
 				+ "UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE, "
 				+ "UNIQUE INDEX `password_UNIQUE` (`password` ASC) VISIBLE);";
@@ -197,6 +197,25 @@ public class Database {
 		return g;
 	}
 	
+	public Group getGroup(String nameOfGroup) { 
+		String str ="SELECT * FROM groups WHERE goods.name='"+nameOfGroup+"'";
+		Group g = null;
+		try {
+			Statement statement = connection.createStatement();
+	    	ResultSet rs = statement.executeQuery(str);
+	    	if(rs.next()) 
+	    		g=new Group(rs.getString("name"), rs.getString("description"));
+	    	else 
+	    		System.out.println("Good with this name doesn`t exist. ");
+	    	rs.close();
+	    	statement.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return g;
+	}
+	
 	public int getGoodId(String nameOfGood) { 
 		String str ="SELECT * FROM goods WHERE goods.name='"+nameOfGood+"'";
 		Good g = null;
@@ -255,7 +274,7 @@ public class Database {
 	}
 
 	public LinkedList<Group> getAllGroups() { 
-		String command = "SELECT * FROM messaging.groups";
+		String command = "SELECT * FROM storage.groups";
 		return getGroups(command);
 	}
 	
@@ -331,6 +350,8 @@ public class Database {
 	
 	
 	
+
+	
 	public void addGoods(String nameOfGood, int quontity){
 		String command = "SELECT * FROM goods WHERE goods.name='"+nameOfGood+"'";
 		try {
@@ -347,6 +368,7 @@ public class Database {
 			e.printStackTrace();
 		}
 	}
+	
 	
 	public void removeGoods(String nameOfGood, int quontity) throws InvalidCharacteristicOfGoodsException{
 		String command = "SELECT * FROM goods WHERE goods.name='"+nameOfGood+"'";
@@ -387,6 +409,28 @@ public class Database {
 		}
 	}
 	
+	public void removeGoodsById(int id, int quontity) throws InvalidCharacteristicOfGoodsException{
+		String command = "SELECT * FROM goods WHERE goods.id='"+id+"'";
+		try {
+			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+	    	ResultSet rs = statement.executeQuery(command);
+	    	if(rs.next()) {
+	    		int old = rs.getInt("quontity");
+	    		if(old-quontity>=0) {
+			    	rs.updateInt("quontity", old-quontity);
+			    	rs.updateRow();
+	    		} else {
+	    			rs.close();
+	    			throw new InvalidCharacteristicOfGoodsException("Can`t remove products.");
+	    		}
+	    	}
+	    	rs.close();
+	    	statement.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * Update information about group in table
 	 * 
@@ -394,7 +438,7 @@ public class Database {
 	 * @param description
 	 */
 	public boolean updateGroup(String name, String newName, String description) {
-		String sql = "UPDATE `group` SET name="+newName+", description="+description+" WHERE name="+name+"";
+		String sql = "UPDATE `group` SET `name`='"+newName+"', `description`='"+description+"' WHERE `name`='"+name+"'";
 		return update(sql);
 	}
 	
@@ -409,17 +453,16 @@ public class Database {
 	 * @param price
 	 * @throws InvalidCharacteristicOfGoodsException 
 	 */
-	public boolean updateGood(String name, String newName, String description, String producer, double price,
-			String groupname) throws InvalidCharacteristicOfGoodsException {
+	public boolean updateGood(int id, String newName, String description, String producer, double price) throws InvalidCharacteristicOfGoodsException {
 		
         if(price<=0) throw new InvalidCharacteristicOfGoodsException();
         
-		String sql = "UPDATE `goods` SET name="+newName+", description="+description+", producer="+producer+","
-				+ " price="+price+", groupName="+groupname+" WHERE name="+name+"";
+		String sql = "UPDATE `goods` SET `name`='"+newName+"', `description`='"+description+"', `producer`='"+producer+"',"
+				+ " `price`='"+price+"' WHERE `id`='"+id+"'";
 		return update(sql);
 	}
 	
-	private boolean update(String command) {
+	private boolean update(String command) { 
 		try {
 			Statement st = connection.createStatement();
 			st.executeUpdate(command);

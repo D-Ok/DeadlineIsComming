@@ -54,7 +54,7 @@ public class AddGoodPanel extends JPanel {
 		nameField = new JTextField();
 		nameField.setFont(new Font("Bookman Old Style", Font.PLAIN, 14));
 		GridBagConstraints gbc_textField = new GridBagConstraints();
-		gbc_textField.insets = new Insets(0, 0, 5, 0);
+		gbc_textField.insets = new Insets(0, 10, 5, 10);
 		gbc_textField.fill = GridBagConstraints.HORIZONTAL;
 		gbc_textField.gridx = 1;
 		gbc_textField.gridy = 0;
@@ -73,9 +73,10 @@ public class AddGoodPanel extends JPanel {
 		JComboBox groupBox = new JComboBox(groups);
 		groupBox.setFont(new Font("Bookman Old Style", Font.PLAIN, 14));
 		GridBagConstraints gbc_comboBox = new GridBagConstraints();
-		gbc_comboBox.insets = new Insets(0, 0, 5, 0);
+		gbc_comboBox.insets = new Insets(0, 10, 5, 0);
 		gbc_comboBox.gridx = 1;
 		gbc_comboBox.gridy = 1;
+		gbc_comboBox.anchor = GridBagConstraints.WEST;
 		add(groupBox, gbc_comboBox);
 
 		JLabel lblNewLabel = new JLabel("Опис:");
@@ -90,7 +91,7 @@ public class AddGoodPanel extends JPanel {
 		descriptionField = new JTextField();
 		descriptionField.setFont(new Font("Bookman Old Style", Font.PLAIN, 14));
 		GridBagConstraints gbc_textField_1 = new GridBagConstraints();
-		gbc_textField_1.insets = new Insets(0, 0, 5, 0);
+		gbc_textField_1.insets = new Insets(0, 10, 5, 10);
 		gbc_textField_1.fill = GridBagConstraints.HORIZONTAL;
 		gbc_textField_1.gridx = 1;
 		gbc_textField_1.gridy = 2;
@@ -109,7 +110,7 @@ public class AddGoodPanel extends JPanel {
 		producerField = new JTextField();
 		producerField.setFont(new Font("Bookman Old Style", Font.PLAIN, 14));
 		GridBagConstraints gbc_textField_2 = new GridBagConstraints();
-		gbc_textField_2.insets = new Insets(0, 0, 5, 0);
+		gbc_textField_2.insets = new Insets(0, 10, 5, 10);
 		gbc_textField_2.fill = GridBagConstraints.HORIZONTAL;
 		gbc_textField_2.gridx = 1;
 		gbc_textField_2.gridy = 3;
@@ -129,7 +130,7 @@ public class AddGoodPanel extends JPanel {
 		priceSpinner.setFont(new Font("Bookman Old Style", Font.PLAIN, 14));
 		priceSpinner.setModel(new SpinnerNumberModel(0, new Double(0), null, new Double(0.5)));
 		GridBagConstraints gbc_spinner = new GridBagConstraints();
-		gbc_spinner.insets = new Insets(0, 0, 5, 0);
+		gbc_spinner.insets = new Insets(0, 10, 5, 0);
 		gbc_spinner.gridx = 1;
 		gbc_spinner.gridy = 4;
 		gbc_spinner.anchor = GridBagConstraints.WEST;
@@ -147,9 +148,10 @@ public class AddGoodPanel extends JPanel {
 		amountSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
 		amountSpinner.setFont(new Font("Bookman Old Style", Font.PLAIN, 14));
 		GridBagConstraints gbc_spinner_1 = new GridBagConstraints();
-		gbc_spinner_1.insets = new Insets(0, 0, 5, 0);
+		gbc_spinner_1.insets = new Insets(0, 10, 5, 0);
 		gbc_spinner_1.gridx = 1;
 		gbc_spinner_1.gridy = 5;
+		gbc_spinner_1.anchor = GridBagConstraints.WEST;
 		add(amountSpinner, gbc_spinner_1);
 
 		JButton saveChanges = new JButton("Додати товар");
@@ -161,6 +163,7 @@ public class AddGoodPanel extends JPanel {
 		gbc_button.insets = new Insets(0, 0, 0, 5);
 		gbc_button.gridx = 0;
 		gbc_button.gridy = 6;
+		gbc_button.gridwidth = 2;
 		add(saveChanges, gbc_button);
 
 		saveChanges.addActionListener(new ActionListener() {

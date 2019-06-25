@@ -51,7 +51,7 @@ public class ApplicationWindow extends JFrame {
 		addRemoveMenu.setFont(new Font("Bookman Old Style", Font.PLAIN, 16));
 		searchMenu = new JMenu("Пошук");
 		searchMenu.setFont(new Font("Bookman Old Style", Font.PLAIN, 16));
-		editMenu = new JMenu("Редагування");
+		editMenu = new JMenu("Додати товар/групу");
 		editMenu.setFont(new Font("Bookman Old Style", Font.PLAIN, 16));
 		statisticsMenu = new JMenu("Статистичні дані");
 		statisticsMenu.setFont(new Font("Bookman Old Style", Font.PLAIN, 16));

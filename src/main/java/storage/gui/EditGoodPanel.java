@@ -35,7 +35,7 @@ public class EditGoodPanel extends JPanel {
 		gridBagLayout.columnWidths = new int[] { 0, 0 };
 		gridBagLayout.rowHeights = new int[] { 0, 0, 0, 0, 0, 0 };
 		gridBagLayout.columnWeights = new double[] { 0.5, 1.0, };
-		gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gridBagLayout.rowWeights = new double[] { 0.5, 0.5, 0.5, 0.5, 0.5 };
 		setLayout(gridBagLayout);
 
 		JLabel label = new JLabel("Ім'я:");

@@ -82,18 +82,25 @@ public class Database {
 	}
 
 	
-	public void createGroup(String nameOfGroup, String description) {
+	public boolean createGroup(String nameOfGroup, String description) {
 		try {
 	    	PreparedStatement ps = connection.prepareStatement("Insert into `groups` (`name`, `description`) values (?, ?)");
 	    	ps.setString(1, nameOfGroup);
 	    	ps.setString(2,  description);
 	    	ps.executeUpdate();
 	    	ps.close();
+	    	return true;
     	} catch(SQLIntegrityConstraintViolationException e) {
     		System.out.println("Group with this name exist.");
+    		return false;
     	} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
 		}
+	}
+	
+	public boolean createGroup(Group group) {
+		return createGroup(group.getName(), group.getDescription());
 	}
 	
 	public boolean createGoods(String nameOfGoods, String nameOfGroup, String description, String producer, int quontity, double price) throws InvalidCharacteristicOfGoodsException { 
@@ -123,17 +130,20 @@ public class Database {
 		return createGoods(g.getName(), g.getGroupName(),g.getDescription(), g.getProducer(), g.getQuontity() , g.getPrice());
 	}
 	
-	public void createUser(String login, String password) {
+	public boolean createUser(String login, String password) {
 		try {
 	    	PreparedStatement ps = connection.prepareStatement("Insert into `users` (`login`, `password`) values (?, ?)");
 	    	ps.setString(1, login);
 	    	ps.setString(2, password);
 	    	ps.executeUpdate();
 	    	ps.close();
+	    	return true;
     	} catch(SQLIntegrityConstraintViolationException e) {
     		System.out.println("User with this password exist.");
+    		return false;
     	} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
 		}
 	}
 	
@@ -148,9 +158,14 @@ public class Database {
 		return update(str);
 	}
 	
-	public void deleteGroup(String nameOfGroup) {
+	public boolean deleteGroup(String nameOfGroup) {
 		String str = "delete from `groups` where `name`='"+nameOfGroup+"'";
-		update(str);
+		return update(str);
+	}
+	
+	public boolean deleteGroupById(int id) {
+		String str = "delete from `groups` where `id`='"+id+"'";
+		return update(str);
 	}
 	
 	public boolean existUser(String login, String password) { 
@@ -198,7 +213,7 @@ public class Database {
 	}
 	
 	public Group getGroup(String nameOfGroup) { 
-		String str ="SELECT * FROM groups WHERE goods.name='"+nameOfGroup+"'";
+		String str ="SELECT * FROM groups WHERE groups.name='"+nameOfGroup+"'";
 		Group g = null;
 		try {
 			Statement statement = connection.createStatement();
@@ -207,6 +222,25 @@ public class Database {
 	    		g=new Group(rs.getString("name"), rs.getString("description"));
 	    	else 
 	    		System.out.println("Good with this name doesn`t exist. ");
+	    	rs.close();
+	    	statement.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return g;
+	}
+	
+	public Group getGroupById(int id) { 
+		String str ="SELECT * FROM `groups` WHERE `groups`.`id`='"+id+"'";
+		Group g = null;
+		try {
+			Statement statement = connection.createStatement();
+	    	ResultSet rs = statement.executeQuery(str);
+	    	if(rs.next()) 
+	    		g=new Group(rs.getString("name"), rs.getString("description"));
+	    	else 
+	    		System.out.println("Group with this name doesn`t exist. ");
 	    	rs.close();
 	    	statement.close();
 		} catch (SQLException e) {
@@ -226,6 +260,25 @@ public class Database {
 	    	if(rs.next()) {
 	    		id =rs.getInt("id");
 	    	}else System.out.println("Good with this name doesn`t exist. ");
+	    	rs.close();
+	    	statement.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return id;
+	}
+	
+	public int getGroupId(String name) { 
+		String str ="SELECT * FROM `groups` WHERE `groups`.`name`='"+name+"'";
+		Good g = null;
+		int id=-1;
+		try {
+			Statement statement = connection.createStatement();
+	    	ResultSet rs = statement.executeQuery(str);
+	    	if(rs.next()) {
+	    		id =rs.getInt("id");
+	    	}else System.out.println("Group with this name doesn`t exist. ");
 	    	rs.close();
 	    	statement.close();
 		} catch (SQLException e) {
@@ -284,6 +337,8 @@ public class Database {
 		
 	}
 	
+	
+	
 	public LinkedList<Good> getAllGoods() {
 		String str ="SELECT * FROM goods";
 		return getGoods(str);
@@ -292,6 +347,11 @@ public class Database {
 	
 	public LinkedList<Group> listByGroupNameBeginsWith(String groupName) {
 		String command = "SELECT * FROM `groups` WHERE `groups`.`name` LIKE '"+groupName+"%'";
+		return getGroups(command);
+	}
+	
+	public LinkedList<Group> containsByGroupNameBeginsWith(String groupName) {
+		String command = "SELECT * FROM `groups` WHERE `groups`.`name` LIKE '%"+groupName+"%'";
 		return getGroups(command);
 	}
 	
@@ -314,6 +374,17 @@ public class Database {
 		String command = "SELECT * FROM goods WHERE goods."+column+" LIKE '"+goodName+"%'";
 		return getGoods(command);
 	}
+	
+	public LinkedList<Good> listByGoodColumnContains(String column, String goodName) {
+		String command = "SELECT * FROM goods WHERE goods."+column+" LIKE '%"+goodName+"%'";
+		return getGoods(command);
+	}
+	
+	public LinkedList<Group> listByGroupColumnContains(String column, String goodName) {
+		String command = "SELECT * FROM groups WHERE groups."+column+" LIKE '%"+goodName+"%'";
+		return getGroups(command);
+	}
+	
 	
 	public LinkedList<Good> listByGoodColumnEndWith(String column, String goodName) {
 		String command = "SELECT * FROM goods WHERE goods."+column+" LIKE '%"+goodName+"'";
@@ -437,8 +508,8 @@ public class Database {
 	 * @param name
 	 * @param description
 	 */
-	public boolean updateGroup(String name, String newName, String description) {
-		String sql = "UPDATE `group` SET `name`='"+newName+"', `description`='"+description+"' WHERE `name`='"+name+"'";
+	public boolean updateGroup(int id, String newName, String description) {
+		String sql = "UPDATE `groups` SET `name`='"+newName+"', `description`='"+description+"' WHERE `id`='"+id+"'";
 		return update(sql);
 	}
 	
@@ -482,9 +553,7 @@ public class Database {
 	    	ResultSet rs = statement.executeQuery(command);
 	    	while(rs.next()) {
 	    		result.add(new Good(rs.getString("name"), rs.getString("description"), rs.getString("producer"), rs.getString("groupName"), rs.getDouble("price"), rs.getInt("quontity")));
-	    		System.out.println(rs.getRow()+". "+"id = "+rs.getInt("id")+", name : "
-	    	+rs.getString("name")+", description: "+rs.getString("description")+", producer: "+rs.getString("producer")
-	    	+", price: "+rs.getDouble("price")+", quontity: "+rs.getInt("quontity")+", group: "+rs.getString("groupName"));
+	    		
 	    	}
 	    	rs.close();
 	    	statement.close();

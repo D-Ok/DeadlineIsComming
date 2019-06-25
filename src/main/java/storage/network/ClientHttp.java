@@ -1,8 +1,26 @@
 package storage.network;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Random;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
+
+import org.apache.commons.codec.binary.Base64;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -19,16 +37,50 @@ import okhttp3.OkHttpClient;
 public class ClientHttp implements Runnable {
 
 	private final OkHttpClient client;
-	public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-	private static final Random random = new Random();
+	public final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+	private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+	private final Random random = new Random();
 	private final String login, password;
 	private static String [] groups = {"groats", "dairy"};
+	private final PrivateKey privateKey;
+	private Key key;
+	private final String publicKey;
+	
+	private void receiveServerKey(byte[] received) {
+		
+		Cipher cipher;
+
+		try {
+			cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.DECRYPT_MODE, privateKey);
+			byte[] decrypted = cipher.doFinal(received);
+			key = new SecretKeySpec(decrypted, "AES");
+			System.out.println("Received key from client");
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
+				| BadPaddingException e) {
+			e.printStackTrace();
+		}
+
+	}
+	  
 	
 	public ClientHttp(String login, String password) {
 		client = new OkHttpClient.Builder().retryOnConnectionFailure(true).build();
 		this.login=login;
 		this.password=password;
+		
+		KeyPairGenerator gen = null;
+		  try {
+		   gen = KeyPairGenerator.getInstance("RSA");
+		  } catch (NoSuchAlgorithmException e) {
+		   System.out.println("Key generator exception");
+		  }
+		  gen.initialize(512, new SecureRandom());
+		  KeyPair pair = gen.generateKeyPair();
+		  PublicKey publKey = pair.getPublic();
+		  
+		  publicKey = Base64.encodeBase64URLSafeString(publKey.getEncoded()); 
+		  privateKey = pair.getPrivate();
 	}
 	
 	public void startWork() {
@@ -71,11 +123,37 @@ public class ClientHttp implements Runnable {
 		}
 	}
 	
+	private byte[] encryptData(String data) {
+		try {
+			Cipher cipher = Cipher.getInstance("AES");
+			byte[] d = data.getBytes("UTF-8");
+			cipher.init(Cipher.ENCRYPT_MODE, key);
+			return cipher.doFinal(d);
+		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+			return null;
+		}
+	}
+	
+	private String decryptData(String data) {
+		try {
+			System.out.println(data);
+			Cipher cipher = Cipher.getInstance("AES");
+			cipher.init(Cipher.DECRYPT_MODE, key);
+			byte[] decrypted = cipher.doFinal(Base64.decodeBase64(data));
+			String res = new String(decrypted);
+			return res;
+		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
 	public String login() throws IOException {
 
 		System.out.println("\n"+Thread.currentThread()+"try to login login = "+login);
 		String MD5Password = ServerHttp.getMD5EncryptedValue(password);
 		Request request = new Request.Builder()
+				.addHeader("PublicKey", publicKey)
 				.url("http://localhost:8765/api/login?login="+login+"&password="+MD5Password)
 				.build();
 
@@ -91,7 +169,10 @@ public class ClientHttp implements Runnable {
 				token = jo.get("token").getAsString();
 				System.out.println(Thread.currentThread()+" token = " + token);
 			}
-
+			if (jo.has("key")) 
+				System.out.println(jo.get("key").getAsString());
+				receiveServerKey(DatatypeConverter.parseHexBinary(jo.get("key").getAsString()));
+			
 		}
 		return token;
 	}
@@ -110,7 +191,7 @@ public class ClientHttp implements Runnable {
 		System.out.println(Thread.currentThread()+" answer on get good with id "+id+" : "+responseCode + " " + response.message());
 
 		if (responseCode == 200) {
-			Good good = GSON.fromJson(response.body().string(), Good.class);
+			Good good = GSON.fromJson(decryptData(response.body().string()), Good.class);
 			System.out.println(Thread.currentThread()+" good with id "+id+" : "+good.toString());
 			return good;
 		} else
@@ -142,10 +223,9 @@ public class ClientHttp implements Runnable {
 		System.out.println("\n"+Thread.currentThread()+"try to create good with id ");
 		
 		Request request = new Request.Builder()
-				// .addHeader("Connection","close")
 				.addHeader("Authorization", token)
 				.url("http://localhost:8765/api/good")
-				.put(RequestBody.create(JSON, GSON.toJson(g)))
+				.put(RequestBody.create(JSON, encryptData(GSON.toJson(g))))
 				.build();
 
 		Response response = client.newCall(request).execute();
@@ -153,7 +233,7 @@ public class ClientHttp implements Runnable {
 		System.out.println(Thread.currentThread()+" answer on creating good : "+responseCode + " " + response.message());
 
 		if (responseCode == 201) {
-			JsonObject jo = (JsonObject) GSON.fromJson(response.body().string(), JsonElement.class);
+			JsonObject jo = (JsonObject) GSON.fromJson(decryptData(response.body().string()), JsonElement.class);
 			int id = -1;
 			if (jo.has("id"))
 				id = jo.get("id").getAsInt();
@@ -173,7 +253,7 @@ public class ClientHttp implements Runnable {
 		String jsonGood = GSON.toJson(good);
 		jo.addProperty("good", jsonGood);
 
-		RequestBody body = RequestBody.create(JSON, GSON.toJson((JsonElement) jo));
+		RequestBody body = RequestBody.create(JSON, encryptData(GSON.toJson((JsonElement) jo)));
 		return sendPostRequest(body, good.getId(), token);
 	}
 	
@@ -184,7 +264,7 @@ public class ClientHttp implements Runnable {
 		jo.addProperty("id", id);
 		jo.addProperty("addGood", quantity);
 
-		RequestBody body = RequestBody.create(JSON, GSON.toJson((JsonElement) jo));
+		RequestBody body = RequestBody.create(JSON, encryptData(GSON.toJson((JsonElement) jo)));
 		return sendPostRequest(body, id, token);
 	}
 	
@@ -195,7 +275,7 @@ public class ClientHttp implements Runnable {
 		jo.addProperty("id", id);
 		jo.addProperty("removeGood", quantity);
 
-		RequestBody body = RequestBody.create(JSON, GSON.toJson((JsonElement) jo));
+		RequestBody body = RequestBody.create(JSON, encryptData(GSON.toJson((JsonElement) jo)));
 		return sendPostRequest(body, id, token);
 	}
 	
@@ -238,8 +318,18 @@ public class ClientHttp implements Runnable {
         
         ClientHttp cli  = new ClientHttp("login", "password");
         String token = cli.login();
-        Good goodToChange = new Good(1, "fig", "milk product", "Kyiv", 24.9);
+        System.out.println(token);
+        Good goodToChange = new Good(1, "milkk", "milk product", "Kyiv", 25.9);
         cli.change(goodToChange, token);
+        
+        cli.getGood(1, token);
+        
+        Good goodToCreate = new Good("name", "description", "producer", "dairy", 30, 100);
+        cli.createGood(goodToCreate, token);
+        
+        cli.deleteGood(1, token);
+        
+        cli.getGood(1, token);
         
 	}
 	
@@ -247,7 +337,7 @@ public class ClientHttp implements Runnable {
 
 	@Override
 	public void run() {
-		//startWork();
+		
 	}
 }
 

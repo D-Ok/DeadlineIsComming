@@ -41,7 +41,7 @@ public class AddGoodPanel extends JPanel {
 		gridBagLayout.columnWidths = new int[] { 0, 0 };
 		gridBagLayout.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0 };
 		// gridBagLayout.columnWeights = new double[] { 0 };
-		gridBagLayout.rowWeights = new double[] { 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0 };
+		gridBagLayout.rowWeights = new double[] { 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 };
 		setLayout(gridBagLayout);
 
 		JLabel label = new JLabel("Ім'я:");
@@ -130,7 +130,7 @@ public class AddGoodPanel extends JPanel {
 
 		JSpinner priceSpinner = new JSpinner();
 		priceSpinner.setFont(new Font("Bookman Old Style", Font.PLAIN, 14));
-		priceSpinner.setModel(new SpinnerNumberModel(0, new Double(0), null, new Double(0.5)));
+		priceSpinner.setModel(new SpinnerNumberModel(0.0, 0.0, null, 0.5));
 		GridBagConstraints gbc_spinner = new GridBagConstraints();
 		gbc_spinner.insets = new Insets(0, 10, 5, 0);
 		gbc_spinner.gridx = 1;

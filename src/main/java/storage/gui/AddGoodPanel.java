@@ -34,6 +34,7 @@ public class AddGoodPanel extends JPanel {
 	/**
 	 * Create the panel.
 	 */
+
 	public AddGoodPanel(LinkedList<Group> linkedList) {
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWeights = new double[] { 0.0, 1.0 };

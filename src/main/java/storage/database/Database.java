@@ -168,6 +168,11 @@ public class Database {
 		return update(str);
 	}
 	
+	public boolean deleteUser(String login) {
+		String str = "delete from `users` where `login`='"+login+"'";
+		return update(str);
+	}
+	
 	public boolean existUser(String login, String password) { 
 		String str ="SELECT * FROM users WHERE users.login='"+login+"' AND users.password='"+password+"'";
 		Good g = null;
@@ -381,7 +386,7 @@ public class Database {
 	}
 	
 	public LinkedList<Group> listByGroupColumnContains(String column, String goodName) {
-		String command = "SELECT * FROM groups WHERE groups."+column+" LIKE '%"+goodName+"%'";
+		String command = "SELECT * FROM `groups` WHERE `groups`.`"+column+"` LIKE '%"+goodName+"%'";
 		return getGroups(command);
 	}
 	

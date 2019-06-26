@@ -263,7 +263,7 @@ public class ClientHttp implements Runnable {
 		Request request = new Request.Builder()
 				.get()
 				.addHeader("Authorization", token)
-				.url("http://localhost:8765/api/goods?column=name&value="+value)
+				.url("http://localhost:8765/api/groups?column=name&value="+value)
 				.build();
 
 		return groups(request);
@@ -273,7 +273,7 @@ public class ClientHttp implements Runnable {
 		Request request = new Request.Builder()
 				.get()
 				.addHeader("Authorization", token)
-				.url("http://localhost:8765/api/goods?column=description&value="+value)
+				.url("http://localhost:8765/api/groups?column=description&value="+value)
 				.build();
 
 		return groups(request);
@@ -601,8 +601,14 @@ public class ClientHttp implements Runnable {
 //        cli.getGroup(id);
 //        cli.deleteGroup(id);
 
-		LinkedList<Good> l = cli.getAllGoods();
-		for (Good g : l) {
+        int id1 = cli.createGroup(new Group("uniGr1", "unitSesc"));
+		int id2 = cli.createGroup(new Group("unitGr2", "unitSesc"));
+		int id3 = cli.createGroup(new Group("unitGr3", "unitSesc"));
+		int id4 = cli.createGroup(new Group("unitGr4", "unitSesc"));
+		int id5 = cli.createGroup(new Group("unitGr5", "unitSesc"));
+		
+		LinkedList<Group> l = cli.getSearchGroupsByDescription("u");
+		for (Group g : l) {
 			System.out.println(g);
 		}
 

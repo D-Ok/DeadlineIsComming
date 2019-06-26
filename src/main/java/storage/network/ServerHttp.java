@@ -679,9 +679,8 @@ public class ServerHttp {
 				if (p == null)
 					sendListOfGroups(exchange, db.getAllGroups(), token);
 				else {
-
+					
 					Map<String, String> params = new HashMap<String, String>();
-
 					for (String str : p.split("&")) {
 						String[] pair = str.split("=");
 						params.put(pair[0], pair[1]);
@@ -718,8 +717,9 @@ public class ServerHttp {
 			OutputStream os = exchange.getResponseBody();
 			os.write(body);
 			os.close();
-		} else
+		} else {
 			exchange.sendResponseHeaders(404, -1);
+		}
 	
 	}
 	}

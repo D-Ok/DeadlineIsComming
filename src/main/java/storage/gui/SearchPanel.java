@@ -7,6 +7,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -18,6 +20,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import storage.database.Good;
+import storage.database.Group;
 
 /**
  * 
@@ -142,11 +145,25 @@ public class SearchPanel extends JPanel {
 				if (goods.isSelected()) {
 					String criteria = goodsBox.getSelectedItem().toString();
 					System.out.println(criteria);
-					Client.sendGoodSearchRequest(query, criteria);
+					LinkedList<Good> res = Client.sendGoodSearchRequest(query, criteria);
+					Iterator<Good> it = res.iterator();
+					LinkedList<JPanel> views = new LinkedList();
+					while (it.hasNext()) {
+						views.add(new SearchGoodViewPanel(it.next()));
+					}
+					addResult(views);
+
 				} else {
 					String criteria = groupsBox.getSelectedItem().toString();
 					System.out.println(criteria);
 					Client.sendGroupSearchRequest(query, criteria);
+					LinkedList<Group> res = Client.sendGroupSearchRequest(query, criteria);
+					Iterator<Group> it = res.iterator();
+					LinkedList<JPanel> views = new LinkedList();
+					while (it.hasNext()) {
+						views.add(new SearchGroupViewPanel(it.next()));
+					}
+					addResult(views);
 				}
 
 			}
@@ -158,7 +175,7 @@ public class SearchPanel extends JPanel {
 	 * 
 	 * @param results
 	 */
-	public void addResult(JPanel[] panels) {
+	public void addResult(LinkedList<JPanel> panels) {
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] { 0 };
 		gridBagLayout.rowHeights = new int[] { 0, 0, 0, 0 };
@@ -172,7 +189,7 @@ public class SearchPanel extends JPanel {
 			gbc_radioButton.insets = new Insets(0, 0, 5, 5);
 			gbc_radioButton.gridx = 0;
 			gbc_radioButton.gridy = row;
-			panelContainer.add(new SearchGoodViewPanel(new Good("name", "", "", "", 0, 0)), gbc_radioButton);
+			panelContainer.add(panelContainer);
 			row++;
 		}
 		resultPanel = new JScrollPane(panelContainer);

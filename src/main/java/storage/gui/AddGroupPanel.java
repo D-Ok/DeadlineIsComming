@@ -85,7 +85,7 @@ public class AddGroupPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Group group = new Group(nameField.getText(), descriptionField.getText());
-				// TODO send client group
+				Client.sendAddGroupRequest(group);
 			}
 		});
 

@@ -1,5 +1,4 @@
 package storage.gui;
-import storage.*;
 
 import javax.swing.JFrame;
 

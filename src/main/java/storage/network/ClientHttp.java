@@ -189,7 +189,7 @@ public class ClientHttp implements Runnable {
 		return token;
 	}
 
-	public String regirnration() throws IOException {
+	public String registration() throws IOException {
 
 		System.out.println("\n" + Thread.currentThread() + "try to login registration = " + login);
 		String MD5Password = ServerHttp.getMD5EncryptedValue(password);

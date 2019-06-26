@@ -1,6 +1,6 @@
 package storage.gui;
 
-import java.io.IOException;
+import java.io.IOException; 
 import java.util.LinkedList;
 
 import javax.swing.JOptionPane;
@@ -21,7 +21,7 @@ public class Client {
 		httpClient = new ClientHttp(login, password);
 		String token = null;
 		try {
-			token = httpClient.registration();
+			token = httpClient.regirnration();
 
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, "Помилка передачі даних", "Помилка регістрації",

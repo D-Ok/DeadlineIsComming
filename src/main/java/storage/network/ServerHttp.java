@@ -1,5 +1,19 @@
 package storage.network;
 
+import com.google.gson.Gson;  
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.sun.net.httpserver.*;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.impl.crypto.MacProvider;
+
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,26 +45,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.binary.Base64;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
-import com.sun.net.httpserver.Authenticator;
-import com.sun.net.httpserver.Headers;
-import com.sun.net.httpserver.HttpContext;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpPrincipal;
-import com.sun.net.httpserver.HttpServer;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.impl.crypto.MacProvider;
-import storage.database.Database;
-import storage.database.Good;
-import storage.database.Group;
+import storage.database.*;
 import storage.exceptions.InvalidCharacteristicOfGoodsException;
 
 public class ServerHttp {
@@ -66,11 +61,13 @@ public class ServerHttp {
 
 	public ServerHttp() throws IOException {
 
+
 		HttpServer server = HttpServer.create();
 		server.bind(new InetSocketAddress(8765), 0);
 
 		HttpContext context = server.createContext("/api/login", new LoginHandler());
 
+		
 		HttpContext registration = server.createContext("/api/registration", new RegistrationHandler());
 
 		HttpContext context1 = server.createContext("/api/group", new GroupHandler());
@@ -78,7 +75,7 @@ public class ServerHttp {
 
 		HttpContext context2 = server.createContext("/api/good", new GoodHandler());
 		context2.setAuthenticator(new Auth());
-
+		
 		HttpContext context3 = server.createContext("/api/groups", new GroupListHandler());
 		context1.setAuthenticator(new Auth());
 
@@ -89,7 +86,7 @@ public class ServerHttp {
 		server.start();
 	}
 
-	public static void main(String[] args) throws Exception, InvalidCharacteristicOfGoodsException {
+	public static void main(String[] args) throws Exception, InvalidCharacteristicOfGoodsException{
 
 		db.createGroup("dairy", "products with milk");
 		db.createGroup("groats", "description");
@@ -139,7 +136,7 @@ public class ServerHttp {
 
 		// This line will throw an exception if it is not a signed JWS (as expected)
 
-		if (tokenAndKey.containsKey(jwt)) {
+		if(tokenAndKey.containsKey(jwt)) {
 			try {
 				Claims claims = Jwts.parser().setSigningKey(key).parseClaimsJws(jwt).getBody();
 				long nowMillis = System.currentTimeMillis();
@@ -182,21 +179,22 @@ public class ServerHttp {
 				if (params.containsKey("password"))
 					password = params.get("password");
 
+				
 				Headers h = exchange.getRequestHeaders();
 				byte[] publicKey = Base64.decodeBase64(h.getFirst("PublicKey"));
-
+				
 				System.out.println("GET: login = " + login + " password = " + password);
 				if (db.existUser(login, password)) {
 					String token = createJWT(" " + unicNumber, login);
 					unicNumber++;
 
-					byte[] key = ServerHttp.generateKey(publicKey, token);
-
+					byte[] key =  ServerHttp.generateKey(publicKey, token);
+					
 					JsonObject jo = new JsonObject();
 					jo.addProperty("token", token);
 					jo.addProperty("key", DatatypeConverter.printHexBinary(key));
-
-					String b = GSON.toJson(jo);
+					
+					String b = GSON.toJson((JsonElement) jo);
 					byte[] body = b.getBytes("UTF-8");
 
 					exchange.sendResponseHeaders(200, body.length);
@@ -238,21 +236,22 @@ public class ServerHttp {
 				if (params.containsKey("password"))
 					password = params.get("password");
 
+				
 				Headers h = exchange.getRequestHeaders();
 				byte[] publicKey = Base64.decodeBase64(h.getFirst("PublicKey"));
-
+				
 				System.out.println("GET: login = " + login + " password = " + password);
 				if (db.createUser(login, password)) {
 					String token = createJWT(" " + unicNumber, login);
 					unicNumber++;
 
-					byte[] key = ServerHttp.generateKey(publicKey, token);
-
+					byte[] key =  ServerHttp.generateKey(publicKey, token);
+					
 					JsonObject jo = new JsonObject();
 					jo.addProperty("token", token);
 					jo.addProperty("key", DatatypeConverter.printHexBinary(key));
-
-					String b = GSON.toJson(jo);
+					
+					String b = GSON.toJson((JsonElement) jo);
 					byte[] body = b.getBytes("UTF-8");
 
 					exchange.sendResponseHeaders(200, body.length);
@@ -310,9 +309,9 @@ public class ServerHttp {
 				String b = GSON.toJson(good);
 				byte[] body = encryptData(token, b);
 				System.out.println(new String(body));
-
+				
 				exchange.sendResponseHeaders(200, body.length);
-
+				
 				OutputStream os = exchange.getResponseBody();
 				os.write(body);
 				os.close();
@@ -351,6 +350,7 @@ public class ServerHttp {
 
 			try {
 
+
 				Good goodToCreate = GSON.fromJson(decryptData(token, is.readAllBytes()), Good.class);
 				if (db.createGoods(goodToCreate)) {
 					System.out.println("Created good: " + goodToCreate);
@@ -358,7 +358,7 @@ public class ServerHttp {
 					JsonObject jo = new JsonObject();
 					jo.addProperty("id", id);
 
-					String b = GSON.toJson(jo);
+					String b = GSON.toJson((JsonElement) jo);
 					byte[] body = encryptData(token, b);
 
 					exchange.sendResponseHeaders(201, body.length);
@@ -380,10 +380,11 @@ public class ServerHttp {
 			Headers head = exchange.getRequestHeaders();
 			String token = head.getFirst("Authorization");
 
+			
 			try {
 				JsonObject jo = GSON.fromJson(decryptData(token, is.readAllBytes()), JsonObject.class);
-
-				if (jo.has("good")) {
+				
+				if(jo.has("good")) {
 					Good goodToChange = GSON.fromJson(jo.get("good").getAsString(), Good.class);
 					Good g = db.getGoodById(goodToChange.getId());
 
@@ -457,6 +458,8 @@ public class ServerHttp {
 			exchange.close();
 		}
 
+
+
 		private void groupInfo(HttpExchange exchange) throws IOException {
 
 			String uri = exchange.getRequestURI().getRawPath();
@@ -469,13 +472,13 @@ public class ServerHttp {
 			Group group = db.getGroupById(idOfGroup);
 			if (group != null) {
 
-				System.out.println("send information to client about: " + group);
+				System.out.println("send information to client about: "+group);
 				String b = GSON.toJson(group);
 				byte[] body = encryptData(token, b);
 				System.out.println(new String(body));
-
+				
 				exchange.sendResponseHeaders(200, body.length);
-
+				
 				OutputStream os = exchange.getResponseBody();
 				os.write(body);
 				os.close();
@@ -493,9 +496,9 @@ public class ServerHttp {
 			int idOfGroup = Integer.valueOf(id);
 			Group group = db.getGroupById(idOfGroup);
 
-			if (group == null)
-				exchange.sendResponseHeaders(404, -1);
-			else {
+			if(group==null) exchange.sendResponseHeaders(404, -1);
+			else 
+			{
 				if (db.deleteGroupById(idOfGroup)) {
 					System.out.println("deleted");
 					exchange.sendResponseHeaders(204, -1);
@@ -513,14 +516,15 @@ public class ServerHttp {
 
 			try {
 
+				
 				Group groupToCreate = GSON.fromJson(decryptData(token, is.readAllBytes()), Group.class);
 				if (db.createGroup(groupToCreate)) {
-
-					System.out.println("Created good: " + groupToCreate);
+					
+					System.out.println("Created good: "+groupToCreate);
 					JsonObject jo = new JsonObject();
 					jo.addProperty("id", db.getGroupId(groupToCreate.getName()));
-					String b = GSON.toJson(jo);
-
+					String b = GSON.toJson((JsonElement) jo);
+					
 					byte[] body = encryptData(token, b);
 					exchange.sendResponseHeaders(201, body.length);
 
@@ -530,7 +534,7 @@ public class ServerHttp {
 				} else
 					exchange.sendResponseHeaders(409, -1);
 
-			} catch (JsonSyntaxException e) {
+			} catch (JsonSyntaxException  e) {
 				exchange.sendResponseHeaders(409, -1);
 			}
 		}
@@ -540,29 +544,28 @@ public class ServerHttp {
 			InputStream is = exchange.getRequestBody();
 			Headers head = exchange.getRequestHeaders();
 			String token = head.getFirst("Authorization");
-
+	
 			try {
 				JsonObject jo = GSON.fromJson(decryptData(token, is.readAllBytes()), JsonObject.class);
-
-				if (jo.has("group")) {
-
+				
+				if(jo.has("group")){
+					
 					Group group = GSON.fromJson(jo.get("group").getAsString(), Group.class);
-					Group groupToChange = db.getGroupById(group.getId());
-					System.out.println("Group before changes: " + groupToChange);
-					if (groupToChange == null)
-						exchange.sendResponseHeaders(404, -1);
+					Group groupToChange = db.getGroupById(group.getId()); 
+					System.out.println("Group before changes: "+groupToChange);
+					if(groupToChange==null) exchange.sendResponseHeaders(404, -1);
 					else {
 						boolean isChanged = false;
-
-						isChanged = db.updateGroup(group.getId(), group.getName(), group.getDescription());
-
-						if (isChanged) {
-							System.out.println("Group changed ");
+						
+						
+					    isChanged = db.updateGroup(group.getId(), group.getName(), group.getDescription());
+						
+						if(isChanged) {
+							System.out.println("Group changed ");	
 							exchange.sendResponseHeaders(204, -1);
-						} else
-							exchange.sendResponseHeaders(409, -1);
+						} else exchange.sendResponseHeaders(409, -1);
 					}
-				} else
+				} else 
 					exchange.sendResponseHeaders(404, -1);
 			} catch (JsonSyntaxException e) {
 				e.printStackTrace();
@@ -570,7 +573,7 @@ public class ServerHttp {
 			}
 		}
 	}
-
+	
 	static class GoodListHandler implements HttpHandler {
 		@Override
 		public void handle(HttpExchange exchange) throws IOException {
@@ -579,10 +582,10 @@ public class ServerHttp {
 
 				Headers head = exchange.getRequestHeaders();
 				String token = head.getFirst("Authorization");
-
+				
 				String uri = exchange.getRequestURI().getRawPath();
 				String[] uriParths = uri.split("/");
-
+				
 				String p = exchange.getRequestURI().getRawQuery();
 
 				if (uriParths[uriParths.length - 2].equals("goods") && uriParths[uriParths.length - 1].equals("all")) {
@@ -638,12 +641,12 @@ public class ServerHttp {
 
 		private void sendListOfGoods(HttpExchange exchange, LinkedList<Good> goods, String token) throws IOException {
 
-			if (goods != null && goods.size() > 0) {
+			if(goods!=null && goods.size()>0) {
 				JsonArray ja = new JsonArray();
 				for (Good g : goods) {
 					ja.add(GSON.toJson(g));
 				}
-				String b = GSON.toJson(ja);
+				String b = GSON.toJson((JsonElement) ja);
 				byte[] body = encryptData(token, b);
 
 				exchange.sendResponseHeaders(200, body.length);
@@ -651,15 +654,17 @@ public class ServerHttp {
 				OutputStream os = exchange.getResponseBody();
 				os.write(body);
 				os.close();
-			} else
-				exchange.sendResponseHeaders(404, -1);
-
+			} else exchange.sendResponseHeaders(404, -1);
+			
 		}
 	}
+
+
 
 	static class GroupListHandler implements HttpHandler {
 		@Override
 		public void handle(HttpExchange exchange) throws IOException {
+
 
 			if ("GET".equals(exchange.getRequestMethod())) {
 
@@ -674,9 +679,8 @@ public class ServerHttp {
 				if (p == null)
 					sendListOfGroups(exchange, db.getAllGroups(), token);
 				else {
-
+					
 					Map<String, String> params = new HashMap<String, String>();
-
 					for (String str : p.split("&")) {
 						String[] pair = str.split("=");
 						params.put(pair[0], pair[1]);
@@ -698,27 +702,28 @@ public class ServerHttp {
 			exchange.close();
 
 		}
+	
+	private void sendListOfGroups(HttpExchange exchange, LinkedList<Group> groups, String token) throws IOException {
+		if (groups != null && groups.size() > 0) {
+			JsonArray ja = new JsonArray();
+			for (Group g : groups) {
+				ja.add(GSON.toJson(g));
+			}
+			String b = GSON.toJson((JsonElement) ja);
+			byte[] body = encryptData(token, b);
 
-		private void sendListOfGroups(HttpExchange exchange, LinkedList<Group> groups, String token)
-				throws IOException {
-			if (groups != null && groups.size() > 0) {
-				JsonArray ja = new JsonArray();
-				for (Group g : groups) {
-					ja.add(GSON.toJson(g));
-				}
-				String b = GSON.toJson(ja);
-				byte[] body = encryptData(token, b);
+			exchange.sendResponseHeaders(200, body.length);
 
-				exchange.sendResponseHeaders(200, body.length);
-
-				OutputStream os = exchange.getResponseBody();
-				os.write(body);
-				os.close();
-			} else
-				exchange.sendResponseHeaders(404, -1);
-
+			OutputStream os = exchange.getResponseBody();
+			os.write(body);
+			os.close();
+		} else {
+			exchange.sendResponseHeaders(404, -1);
 		}
+	
 	}
+	}
+
 
 	static class Auth extends Authenticator {
 		@Override
@@ -755,6 +760,7 @@ public class ServerHttp {
 		}
 		return password;
 	}
+
 
 	public static byte[] encryptData(String token, String data) {
 		try {

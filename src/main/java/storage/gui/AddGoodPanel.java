@@ -7,6 +7,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import javax.swing.JButton;
@@ -72,7 +73,12 @@ public class AddGoodPanel extends JPanel {
 		gbc_label_3.gridy = 1;
 		add(label_3, gbc_label_3);
 
-		JComboBox groupBox = new JComboBox(linkedList.toArray());
+		LinkedList<String> groupNames = new LinkedList<String>();
+		Iterator<Group> it = linkedList.iterator();
+		while(it.hasNext()) {
+			groupNames.add(it.next().getName());
+		}
+		JComboBox groupBox = new JComboBox(groupNames.toArray());
 		groupBox.setFont(new Font("Bookman Old Style", Font.PLAIN, 14));
 		GridBagConstraints gbc_comboBox = new GridBagConstraints();
 		gbc_comboBox.insets = new Insets(0, 10, 5, 0);
@@ -136,6 +142,7 @@ public class AddGoodPanel extends JPanel {
 		gbc_spinner.gridx = 1;
 		gbc_spinner.gridy = 4;
 		gbc_spinner.anchor = GridBagConstraints.WEST;
+		gbc_spinner.fill = GridBagConstraints.HORIZONTAL;
 		add(priceSpinner, gbc_spinner);
 
 		JLabel label_4 = new JLabel("Кількість на складі:");

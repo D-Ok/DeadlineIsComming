@@ -415,4 +415,110 @@ public class AppTest
 		}
 		
 	}
+	
+
+	@Test
+	public void testClientgetGoodsByName() {
+		Database db = new Database();
+		String login = "login";
+		String password = "password";
+		ClientHttp cli = new ClientHttp(login, password);
+		try {
+			
+			cli.login();
+			String nameG = "UntitGoods"; 
+			int idGr = cli.createGroup(new Group(nameG, "d"));
+			
+			int id1 = cli.createGood(new Good("unitGoodTest1", "descr", "prod",nameG, 2, 2));
+			int id2 = cli.createGood(new Good("unitGoodTest2", "descr", "prod",nameG, 2, 2));
+			int id3 = cli.createGood(new Good("unitGoodTest3", "descr", "prod",nameG, 2, 2));
+			int id4 = cli.createGood(new Good("unitGoodTest4", "descr", "prod",nameG, 2, 2));
+			int id5 = cli.createGood(new Good("unitGoodTest5", "descr", "prod",nameG, 2, 2));
+			
+			LinkedList<Good> l = cli.getSearchGoodsByName("tGoodTes");
+			Assert.assertEquals(5, l.size());
+			
+			cli.deleteGood(id1);
+			cli.deleteGood(id2);
+			cli.deleteGood(id3);
+			cli.deleteGood(id4);
+			cli.deleteGood(id5);
+			cli.deleteGroup(idGr);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	@Test
+	public void testClientgetGoodsByDescription() {
+		Database db = new Database();
+		String login = "login";
+		String password = "password";
+		ClientHttp cli = new ClientHttp(login, password);
+		try {
+			
+			cli.login();
+			String nameG = "UntitGoods"; 
+			int idGr = cli.createGroup(new Group(nameG, "d"));
+			
+			int id1 = cli.createGood(new Good("unitGoodTest1", "descrUnitUnit", "prod",nameG, 2, 2));
+			int id2 = cli.createGood(new Good("unitGoodTest2", "descr", "prod",nameG, 2, 2));
+			int id3 = cli.createGood(new Good("unitGoodTest3", "descrUnitUnit", "prod",nameG, 2, 2));
+			int id4 = cli.createGood(new Good("unitGoodTest4", "descr", "prod",nameG, 2, 2));
+			int id5 = cli.createGood(new Good("unitGoodTest5", "descrUnitUnit", "prod",nameG, 2, 2));
+			
+			LinkedList<Good> l = cli.getSearchGoodsByDescription("crUnitU");
+			Assert.assertEquals(3, l.size());
+			
+			cli.deleteGood(id1);
+			cli.deleteGood(id2);
+			cli.deleteGood(id3);
+			cli.deleteGood(id4);
+			cli.deleteGood(id5);
+			cli.deleteGroup(idGr);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	@Test
+	public void testClientgetGoodsByProduser() {
+		Database db = new Database();
+		String login = "login";
+		String password = "password";
+		ClientHttp cli = new ClientHttp(login, password);
+		try {
+			
+			cli.login();
+			String nameG = "UntitGoods"; 
+			int idGr = cli.createGroup(new Group(nameG, "d"));
+			
+			int id1 = cli.createGood(new Good("unitGoodTest1", "descr", "prodUnit",nameG, 2, 2));
+			int id2 = cli.createGood(new Good("unitGoodTest2", "descr", "prodUnit",nameG, 2, 2));
+			int id3 = cli.createGood(new Good("unitGoodTest3", "descr", "prod",nameG, 2, 2));
+			int id4 = cli.createGood(new Good("unitGoodTest4", "descr", "prod",nameG, 2, 2));
+			int id5 = cli.createGood(new Good("unitGoodTest5", "descr", "prod",nameG, 2, 2));
+			
+			LinkedList<Good> l = cli.getSearchGoodsByProducer("crUnitU");
+			Assert.assertTrue(l==null);
+			
+			 l = cli.getSearchGoodsByProducer("dUnit");
+			Assert.assertEquals(2, l.size());
+			
+			cli.deleteGood(id1);
+			cli.deleteGood(id2);
+			cli.deleteGood(id3);
+			cli.deleteGood(id4);
+			cli.deleteGood(id5);
+			cli.deleteGroup(idGr);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
 }

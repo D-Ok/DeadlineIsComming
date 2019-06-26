@@ -5,6 +5,7 @@ import java.util.LinkedList;
 
 import javax.swing.JOptionPane;
 
+import storage.database.Good;
 import storage.database.Group;
 import storage.network.ClientHttp;
 
@@ -71,6 +72,20 @@ public class Client {
 		if (list == null)
 			JOptionPane.showMessageDialog(null, "Помилка обробки даних", "Помилка", JOptionPane.ERROR_MESSAGE);
 		return list;
+	}
+
+	public static void sendAddGoodRequest(Good g) {
+		int returned = -1;
+		try {
+			returned = httpClient.createGood(g);
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(null, "Помилка передачі даних", "Помилка регістрації",
+					JOptionPane.ERROR_MESSAGE);
+		}
+		if (returned == -1) {
+			JOptionPane.showMessageDialog(null, "Некоректні дані для створення товару", "Помилка",
+					JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
 }

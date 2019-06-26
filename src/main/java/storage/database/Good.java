@@ -1,5 +1,4 @@
 package storage.database;
-import storage.*;
 
 public class Good {
 
@@ -10,12 +9,12 @@ public class Good {
 	private String groupName;
 	private double price;
 	private int quontity;
-	
+
 	public Good() {
-		
+
 	}
-	
-	public Good(int id,String name, String description, String producer, double price) {
+
+	public Good(int id, String name, String description, String producer, double price) {
 		this.id = id;
 		this.name = name;
 		this.description = description;
@@ -23,9 +22,9 @@ public class Good {
 		this.price = price;
 		this.quontity = 0;
 	}
-	
-	public Good( String name, String description, String producer, String groupName, double price, int quontity) {
-		
+
+	public Good(String name, String description, String producer, String groupName, double price, int quontity) {
+
 		this.name = name;
 		this.description = description;
 		this.producer = producer;
@@ -95,6 +94,5 @@ public class Good {
 		return "Good [name=" + name + ", description=" + description + ", producer=" + producer + ", groupName="
 				+ groupName + ", price=" + price + ", quontity=" + quontity + "]";
 	}
-	
-	
+
 }

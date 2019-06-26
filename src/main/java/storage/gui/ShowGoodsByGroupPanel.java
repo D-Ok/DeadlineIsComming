@@ -5,18 +5,22 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.LinkedList;
 
+import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+
+import storage.database.Group;
 
 public class ShowGoodsByGroupPanel extends JPanel {
 
 	/**
 	 * Create the panel.
 	 */
-	public ShowGoodsByGroupPanel(String[] groups) {
+	public ShowGoodsByGroupPanel(LinkedList<Group> linkedList) {
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] { 0, 0, 0 };
 		gridBagLayout.rowHeights = new int[] { 0, 0, 0 };
@@ -33,7 +37,7 @@ public class ShowGoodsByGroupPanel extends JPanel {
 		gbc_lblNewLabel.gridy = 0;
 		add(lblNewLabel, gbc_lblNewLabel);
 
-		JComboBox groupsBox = new JComboBox(groups);
+		JComboBox groupsBox = new JComboBox((ComboBoxModel) linkedList);
 		groupsBox.setForeground(Color.WHITE);
 		groupsBox.setBackground(new Color(0, 204, 153));
 		groupsBox.setFont(new Font("Bookman Old Style", Font.PLAIN, 16));

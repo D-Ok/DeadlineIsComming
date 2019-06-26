@@ -338,5 +338,81 @@ public class AppTest
 		
 	}
 	
+	@Test
+	public void testClientDeleteGood() {
+		Database db = new Database();
+		String login = "login";
+		String password = "password";
+		ClientHttp cli = new ClientHttp(login, password);
+		try {
+			
+			String token = cli.login();
+			int idGr = cli.createGroup(new Group("UnitGr", "descr"));
+			int idG = cli.createGood(new Good("UnitGood", "descr", "pr", "UnitGr", 30.9, 500));
+
+			boolean f = cli.deleteGood(idG);
+			Assert.assertTrue(f);
+			
+			boolean s = cli.deleteGood(idG);
+			Assert.assertFalse(s);
+			
+			cli.deleteGroup(idGr);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
 	
+	@Test
+	public void testClientUpdateGood() {
+		Database db = new Database();
+		String login = "login";
+		String password = "password";
+		ClientHttp cli = new ClientHttp(login, password);
+		try {
+			
+			String token = cli.login();
+			int idGr = cli.createGroup(new Group("UnitGr", "descr"));
+			int idG = cli.createGood(new Good("UnitGood", "descr", "pr", "UnitGr", 30.9, 500));
+
+			double price = 40;
+			String name = "UnitNewName";
+			String descr = "newDescr";
+			
+			Good goodToUpdate = new Good(idG, name, descr, "UnitGr", price);
+			boolean up = cli.change(goodToUpdate);
+			Assert.assertTrue(up);
+			
+			Good received = cli.getGood(idG);
+			Assert.assertTrue(price==received.getPrice());
+			Assert.assertEquals(name, received.getName());
+			Assert.assertEquals(descr, received.getDescription());
+			
+			boolean f = cli.deleteGood(idG);
+			cli.deleteGroup(idGr);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	@Test
+	public void testClientgetAllGoods() {
+		Database db = new Database();
+		String login = "login";
+		String password = "password";
+		ClientHttp cli = new ClientHttp(login, password);
+		try {
+			
+			String token = cli.login();
+			LinkedList<Good> res = cli.getAllGoods();
+			Assert.assertNotNull(res);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
 }

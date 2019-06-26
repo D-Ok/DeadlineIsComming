@@ -312,20 +312,31 @@ public class AppTest
 	
 	
 	
-//	@Test
-//	public void testClientCreateGood() {
-//		Database db = new Database();
-//		String login = "login";
-//		String password = "password";
-//		ClientHttp cli = new ClientHttp(login, password);
-//		try {
-//			String token = cli.login();
-//			Good g = new Good("testName", "descr", "prod", "")
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//		
-//	}
+	@Test
+	public void testClientCreateGood() {
+		Database db = new Database();
+		String login = "login";
+		String password = "password";
+		ClientHttp cli = new ClientHttp(login, password);
+		try {
+			
+			String token = cli.login();
+			int idGr = cli.createGroup(new Group("UnitGr", "descr"));
+			int idG = cli.createGood(new Good("UnitGood", "descr", "pr", "UnitGr", 30.9, 500));
+			
+			Assert.assertNotEquals(-1, idG);
+			
+			int idSame = cli.createGood(new Good("UnitGood", "descr", "pr", "UnitGr", 30.9, 500));
+			Assert.assertEquals(-1, idSame);
+			
+			cli.deleteGood(idG);
+			cli.deleteGroup(idGr);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
 	
 	
 }

@@ -34,6 +34,7 @@ public class AddGoodPanel extends JPanel {
 	 * Create the panel.
 	 */
 	public AddGoodPanel(Group[] groups) {
+		System.out.println("fffffffffffffffffffffffffffffff");
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWeights = new double[] { 0.0, 1.0 };
 		gridBagLayout.columnWidths = new int[] { 0, 0 };

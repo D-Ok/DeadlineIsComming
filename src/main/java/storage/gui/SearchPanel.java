@@ -139,8 +139,15 @@ public class SearchPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String query = queryField.getText();
-
-				// TODO send
+				if (goods.isSelected()) {
+					String criteria = goodsBox.getSelectedItem().toString();
+					System.out.println(criteria);
+					Client.sendGoodSearchRequest(query, criteria);
+				} else {
+					String criteria = groupsBox.getSelectedItem().toString();
+					System.out.println(criteria);
+					Client.sendGroupSearchRequest(query, criteria);
+				}
 
 			}
 		});

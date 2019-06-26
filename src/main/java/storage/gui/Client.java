@@ -1,6 +1,6 @@
 package storage.gui;
 
-import java.io.IOException; 
+import java.io.IOException;
 import java.util.LinkedList;
 
 import javax.swing.JOptionPane;
@@ -85,7 +85,77 @@ public class Client {
 		if (returned == -1) {
 			JOptionPane.showMessageDialog(null, "Некоректні дані для створення товару", "Помилка",
 					JOptionPane.ERROR_MESSAGE);
+		} else
+			JOptionPane.showMessageDialog(null, "Товар успішно додано", "", JOptionPane.CLOSED_OPTION);
+	}
+
+	public static void sendAddGroupRequest(Group g) {
+		int returned = -1;
+		try {
+			returned = httpClient.createGroup(g);
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(null, "Помилка передачі даних", "Помилка регістрації",
+					JOptionPane.ERROR_MESSAGE);
 		}
+		if (returned == -1) {
+			JOptionPane.showMessageDialog(null, "Некоректні дані для створення групи", "Помилка",
+					JOptionPane.ERROR_MESSAGE);
+		} else
+			JOptionPane.showMessageDialog(null, "Групу успішно додано", "", JOptionPane.CLOSED_OPTION);
+	}
+
+	public static void sendGoodSearchRequest(String query, String criteria) {
+		switch (criteria) {
+		case "Ім'я":
+			try {
+				httpClient.getSearchGoodsByName(query);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		case "Опис":
+			try {
+				httpClient.getSearchGoodsByDescription(query);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		case "Група":
+			try {
+				httpClient.getSearchGoodsByGroup(query);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		case "Виробник":
+			try {
+				httpClient.getSearchGoodsByProducer(query);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		}
+	}
+
+	public static void sendGroupSearchRequest(String query, String criteria) {
+		if (criteria.equals("Ім'я"))
+			try {
+				httpClient.getSearchGroupByName(query);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		else
+			try {
+				httpClient.getSearchGroupsByDescription(query);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	}
 
 }

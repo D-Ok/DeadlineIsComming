@@ -7,7 +7,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.LinkedList;
 
-import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -37,7 +36,7 @@ public class ShowGoodsByGroupPanel extends JPanel {
 		gbc_lblNewLabel.gridy = 0;
 		add(lblNewLabel, gbc_lblNewLabel);
 
-		JComboBox groupsBox = new JComboBox((ComboBoxModel) linkedList);
+		JComboBox groupsBox = new JComboBox(linkedList.toArray());
 		groupsBox.setForeground(Color.WHITE);
 		groupsBox.setBackground(new Color(0, 204, 153));
 		groupsBox.setFont(new Font("Bookman Old Style", Font.PLAIN, 16));

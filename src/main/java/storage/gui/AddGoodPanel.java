@@ -176,7 +176,7 @@ public class AddGoodPanel extends JPanel {
 						groupBox.getSelectedItem().toString(), (double) priceSpinner.getValue(),
 						(int) amountSpinner.getValue());
 
-				// TODO send client good
+				Client.sendAddGoodRequest(g);
 			}
 		});
 

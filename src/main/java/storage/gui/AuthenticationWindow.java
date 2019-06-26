@@ -130,7 +130,7 @@ public class AuthenticationWindow extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-
+				Client.sendLoginRequest(textField.getText(), new String(passwordField.getPassword()));
 			}
 		});
 

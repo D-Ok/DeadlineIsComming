@@ -1,6 +1,6 @@
 package storage.gui;
 
-import java.awt.Color; 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -121,7 +121,7 @@ public class SearchGoodViewPanel extends JPanel {
 				int choice = JOptionPane.showConfirmDialog(null, "Ви впевнені, що хочете видалити цей товар?",
 						"Видалення", JOptionPane.OK_CANCEL_OPTION);
 				if (choice == JOptionPane.OK_OPTION) {
-					// TODO delete
+					Client.sendDeleteGoodRequest(good.getId());
 				}
 
 			}

@@ -89,7 +89,7 @@ public class EditGroupPanel extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				group.setName(nameField.getText());
 				group.setDescription(descriptionField.getText());
-				// TODO send client group
+				Client.sendEditGroupRequest(group);
 			}
 		});
 

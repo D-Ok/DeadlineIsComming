@@ -137,7 +137,7 @@ public class EditGoodPanel extends JPanel {
 				good.setProducer(producerField.getText());
 				good.setDescription(descriptionField.getText());
 				good.setPrice((double) spinner.getValue());
-				// TODO call client method
+				Client.sendEditGoodRequest(good);
 			}
 		});
 	}

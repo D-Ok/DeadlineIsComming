@@ -104,11 +104,12 @@ public class Client {
 			JOptionPane.showMessageDialog(null, "Групу успішно додано", "", JOptionPane.CLOSED_OPTION);
 	}
 
-	public static void sendGoodSearchRequest(String query, String criteria) {
+	public static LinkedList<Good> sendGoodSearchRequest(String query, String criteria) {
+		LinkedList<Good> results = new LinkedList<>();
 		switch (criteria) {
 		case "Ім'я":
 			try {
-				httpClient.getSearchGoodsByName(query);
+				results = httpClient.getSearchGoodsByName(query);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -116,7 +117,7 @@ public class Client {
 			break;
 		case "Опис":
 			try {
-				httpClient.getSearchGoodsByDescription(query);
+				results = httpClient.getSearchGoodsByDescription(query);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -124,7 +125,7 @@ public class Client {
 			break;
 		case "Група":
 			try {
-				httpClient.getSearchGoodsByGroup(query);
+				results = httpClient.getSearchGoodsByGroup(query);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -132,30 +133,85 @@ public class Client {
 			break;
 		case "Виробник":
 			try {
-				httpClient.getSearchGoodsByProducer(query);
+				results = httpClient.getSearchGoodsByProducer(query);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			break;
 		}
+		return results;
 	}
 
-	public static void sendGroupSearchRequest(String query, String criteria) {
+	public static LinkedList<Group> sendGroupSearchRequest(String query, String criteria) {
+		LinkedList<Group> results = new LinkedList<>();
 		if (criteria.equals("Ім'я"))
 			try {
-				httpClient.getSearchGroupByName(query);
+				results = httpClient.getSearchGroupByName(query);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		else
 			try {
-				httpClient.getSearchGroupsByDescription(query);
+				results = httpClient.getSearchGroupsByDescription(query);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		return results;
+	}
+
+	public static void sendEditGroupRequest(Group g) {
+		boolean changed = false;
+		try {
+			changed = httpClient.changeGroup(g);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (changed)
+			JOptionPane.showMessageDialog(null, "Групу успішно змінено", "", JOptionPane.CLOSED_OPTION);
+		else
+			JOptionPane.showMessageDialog(null, "Некоректні дані для групи", "Помилка", JOptionPane.ERROR_MESSAGE);
+	}
+
+	public static void sendEditGoodRequest(Good g) {
+		boolean changed = false;
+		try {
+			changed = httpClient.change(g);
+		} catch (IOException e) {
+			// TODO Auto-generated catch
+			e.printStackTrace();
+		}
+		if (changed)
+			JOptionPane.showMessageDialog(null, "Товар успішно змінено", "", JOptionPane.CLOSED_OPTION);
+		else
+			JOptionPane.showMessageDialog(null, "Некоректні дані для товару", "Помилка", JOptionPane.ERROR_MESSAGE);
+	}
+
+	public static void sendDeleteGoodRequest(int id) {
+		boolean deleted = false;
+		try {
+			deleted = httpClient.deleteGood(id);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (deleted)
+			JOptionPane.showMessageDialog(null, "Товар успішно видалено", "", JOptionPane.CLOSED_OPTION);
+	}
+
+	public static void sendDeleteGroupRequest(int id) {
+		boolean deleted = false;
+		try {
+			deleted = httpClient.deleteGroup(id);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (deleted)
+			JOptionPane.showMessageDialog(null, "Групу успішно видалено", "", JOptionPane.CLOSED_OPTION);
 	}
 
 }

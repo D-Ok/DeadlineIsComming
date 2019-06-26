@@ -7,6 +7,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.LinkedList;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -33,8 +34,8 @@ public class AddGoodPanel extends JPanel {
 	/**
 	 * Create the panel.
 	 */
-	public AddGoodPanel(Group[] groups) {
-		System.out.println("fffffffffffffffffffffffffffffff");
+
+	public AddGoodPanel(LinkedList<Group> linkedList) {
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWeights = new double[] { 0.0, 1.0 };
 		gridBagLayout.columnWidths = new int[] { 0, 0 };
@@ -71,7 +72,7 @@ public class AddGoodPanel extends JPanel {
 		gbc_label_3.gridy = 1;
 		add(label_3, gbc_label_3);
 
-		JComboBox groupBox = new JComboBox(groups);
+		JComboBox groupBox = new JComboBox(linkedList.toArray());
 		groupBox.setFont(new Font("Bookman Old Style", Font.PLAIN, 14));
 		GridBagConstraints gbc_comboBox = new GridBagConstraints();
 		gbc_comboBox.insets = new Insets(0, 10, 5, 0);

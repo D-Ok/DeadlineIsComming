@@ -1,10 +1,11 @@
 package storage.database;
+
 public class Group {
 
 	private String name;
 	private String description;
 	private int id;
-	
+
 	public int getId() {
 		return id;
 	}
@@ -17,9 +18,9 @@ public class Group {
 		this.name = name;
 		this.description = description;
 	}
-	
+
 	public Group(int id, String name, String description) {
-		this.id=id;
+		this.id = id;
 		this.name = name;
 		this.description = description;
 	}
@@ -45,4 +46,3 @@ public class Group {
 		this.description = description;
 	}
 }
-

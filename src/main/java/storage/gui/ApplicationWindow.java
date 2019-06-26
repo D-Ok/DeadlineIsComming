@@ -121,7 +121,7 @@ public class ApplicationWindow extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// frame.changePanel(new AddGoodPanel(groups));
+				frame.changePanel(new AddGoodPanel(Client.getAllGroups()));
 			}
 		});
 		addMenu.add(addGroup);
@@ -141,7 +141,7 @@ public class ApplicationWindow extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				frame.changePanel(new AllGoodsPanel());
+				// frame.changePanel(new AllGoodsPanel());
 			}
 		});
 		statisticsMenu.add(showByGroups);
@@ -149,7 +149,7 @@ public class ApplicationWindow extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// frame.changePanel(new ShowGoodsByGroupPanel(groups));
+				frame.changePanel(new ShowGoodsByGroupPanel(Client.getAllGroups()));
 			}
 		});
 		statisticsMenu.setFont(new Font("Bookman Old Style", Font.PLAIN, 16));
